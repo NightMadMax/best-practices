@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "profile": "minimal",
+  "source": "NightMadMax/new-project-rules",
+  "source_commit": "6ca56ed87dca6748385a66afdd3f385a5ec0ac8a",
+  "created_at": null,
+  "adopted_at": "2026-07-05",
+  "applied_migrations": [
+    "0001-adopt-project-standard"
+  ]
+}
