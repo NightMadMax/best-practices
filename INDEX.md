@@ -10,6 +10,6 @@
 | [[CLAUDE|CLAUDE.md]] | Imports [[AGENTS]] for Claude Code |
 | [[INDEX]] | Карта фактически существующих файлов |
 | [[PROJECT]] | Цели, scope, ограничения и критерии успеха |
-| [[practices/1c/README\|practices/1c]] | Практики разработки для 1С |
-| [[practices/web/README\|practices/web]] | Практики веб-разработки |
-| [[practices/common/README\|practices/common]] | Общие практики |
+| [[practices/1c/README]] | Практики разработки для 1С |
+| [[practices/web/README]] | Практики веб-разработки |
+| [[practices/common/README]] | Общие практики |
