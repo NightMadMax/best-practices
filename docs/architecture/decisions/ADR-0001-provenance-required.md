@@ -6,7 +6,7 @@ last_verified: 2026-07-05
 source_of_truth: repository
 related:
   - "[[docs/architecture/decisions/README]]"
-  - "[[docs/quality/PRACTICE_CANDIDATES]]"
+  - "[[candidates/README]]"
 ---
 
 # ADR-0001. Каждая запись базы несёт происхождение
@@ -31,8 +31,8 @@ related:
 - **Evidence** (где есть) — commit, PR, defect, тест.
 
 Это применяется к формату записи в `practices/**`, к таблицам
-`practices/tools`, к backlog `docs/quality/PRACTICE_CANDIDATES.md` (колонки
-`Source`, `Added by`) и удерживается скилами `harvest`/`review`/`apply`.
+`practices/tools`, к файлам-кандидатам `candidates/PC-*.md` (frontmatter
+`source`, `added_by`) и удерживается скилами `harvest`/`review`/`apply`.
 
 Секреты, токены и приватные хосты в происхождении не хранятся — только имена
 проектов и людей/ролей.

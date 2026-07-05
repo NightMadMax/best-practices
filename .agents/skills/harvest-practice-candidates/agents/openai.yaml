@@ -1,4 +1,4 @@
 interface:
   display_name: "Harvest Practice Candidates"
   short_description: "Collect and triage technical practice candidates from nearby projects"
-  default_prompt: "Use $harvest-practice-candidates to scan nearby repositories, extract reusable technical/stack lessons, and normalize them into Best Practices staging candidates without editing practices/."
+  default_prompt: "Use $harvest-practice-candidates to scan nearby repositories, extract reusable technical/stack lessons, and normalize each into its own candidates/PC-*.md file without editing practices/."
