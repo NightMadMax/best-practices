@@ -13,6 +13,8 @@
 | [[CONTRIBUTING]] | Как присылать кандидатов через PR |
 | [[candidates/README]] | Staging: файлы-кандидаты (один файл — один кандидат) |
 | [[candidates/_TEMPLATE]] | Шаблон файла-кандидата |
+| [[practices/README]] | Правила и навигация по принятым практикам |
+| [[practices/_TEMPLATE]] | Шаблон отдельного файла принятой практики |
 | [[practices/1c/README]] | Практики разработки для 1С |
 | [[practices/web/README]] | Практики веб-разработки |
 | [[practices/common/README]] | Общие практики |
@@ -22,9 +24,14 @@
 | [[practices/snippets/README]] | Сниппеты и конфиги |
 | [[docs/README]] | Индекс каталога `docs/` |
 | [[docs/quality/DEFECTS]] | Журнал дефектов проекта |
+| [[docs/research/BEST_PRACTICES_MULTI_STACK_RESEARCH_2026-07-05]] | Исследование multi-stack консолидации и онбординга |
+| [[docs/tutorials/FIRST_CONTRIBUTION]] | Tutorial первого вклада |
+| [[docs/how-to/HARVEST_REVIEW_APPLY]] | How-to полного конвейера практики |
+| [[docs/reference/PRACTICE_SCHEMA]] | Reference схемы данных и manifest |
 | [[docs/architecture/decisions/README]] | Каталог решений (ADR) |
 | [[docs/architecture/decisions/ADR-0001-provenance-required]] | Происхождение обязательно для каждой записи |
 | [[docs/architecture/decisions/ADR-0002-tool-verdicts-tech-radar]] | Вердикты инструментов по tech-radar |
+| [[docs/architecture/decisions/ADR-0003-one-practice-per-file]] | Одна практика — один файл, lifecycle и evidence levels |
 
 ## Скилы конвейера
 

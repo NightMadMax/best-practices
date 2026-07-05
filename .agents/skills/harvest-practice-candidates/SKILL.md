@@ -33,7 +33,7 @@ merge-конфликтов).
 1. Найти корень базы `Best Practices`: каталог с `README.md`, `INDEX.md`,
    `PROJECT.md`, `practices/` и `candidates/`.
 2. Полностью прочитать `candidates/README.md` (схема и статус-модель),
-   `candidates/_TEMPLATE.md` и текущие `practices/1c/README.md`,
+   `candidates/_TEMPLATE.md`, ADR-0003 и текущие `practices/1c/README.md`,
    `practices/web/README.md`, `practices/common/README.md`. Они имеют приоритет
    над этим workflow.
 
@@ -90,19 +90,22 @@ merge-конфликтов).
 1. Для каждого прошедшего фильтр кандидата создать **отдельный файл**
    `candidates/PC-<год>-<номер>-<slug>.md` по `candidates/_TEMPLATE.md`
    (следующий свободный номер). Заполнить frontmatter: `id`, `status`, `source`,
-   `added_by`, `stack`, `target`, `evidence`, `created`, `decided` — и тело.
+   `added_by`, `stack`, `target`, `evidence_level`, `evidence`, `created`,
+   `decided` — и тело.
    - **Происхождение обязательно** (ADR-0001): `source` — проект и артефакт;
      `added_by` — кто предложил/подтвердил (пользователь по имени/роли, автор
      коммита; если найдено автоматически — указать `агент`/`harvest`).
    - Без заполненных `source` и `added_by` файл кандидата не создавать.
-2. `target` — конкретный файл `practices/<раздел>/README.md` (`<раздел>` —
-   стек `1c`/`web`/`common` или `tools`/`anti-patterns`/`prompts`/`snippets`);
-   или предложить новый файл в этом разделе, если тема большая.
-3. `status`: `new`, если раздел/target ещё неясны; `triaged`, если кандидат
+2. `target` — будущий отдельный файл практики с тем же basename:
+   `practices/<раздел>/PC-<год>-<номер>-<slug>.md`. Не указывать README.
+3. `evidence_level`: `E0`, если есть только мнение/внешний материал; `E1`, если
+   сигнал подтверждён одним проектом. Harvest не выставляет `E2`/`E3` без
+   явных независимых evidence.
+4. `status`: `new`, если раздел/target ещё неясны; `triaged`, если кандидат
    нормализован, раздел и target определены и приватный контекст удалён.
-4. Не создавать дубли. Если похожий кандидат уже есть в `candidates/` — обновить
+5. Не создавать дубли. Если похожий кандидат уже есть в `candidates/` — обновить
    его файл (`evidence`, тело), а не заводить новый.
-5. Не выставлять `accepted` автоматически: принятие — задача
+6. Не выставлять `accepted` автоматически: принятие — задача
    `review-practice-candidates`.
 
 ## Записать кандидатов
@@ -112,6 +115,7 @@ merge-конфликтов).
 2. Сохранить краткие ссылки на исходные артефакты без копирования приватного
    текста.
 3. Не трогать файлы `practices/**` — их меняет только review-этап.
+4. Запустить `make check`; не считать кандидат готовым при ошибке validator.
 
 ## Отчёт
 

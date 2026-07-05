@@ -49,7 +49,8 @@ merge-конфликтов (в отличие от общей таблицы).
 | `source` | Проект и артефакт, откуда пришло (без приватного текста) |
 | `added_by` | Кто предложил/подтвердил: пользователь, автор или агент |
 | `stack` | Раздел базы: `1c`/`web`/`common`/`tools`/`anti-patterns`/`prompts`/`snippets` |
-| `target` | Целевой файл в `practices/<раздел>/` |
+| `target` | Будущий файл `practices/<раздел>/PC-*.md` с тем же именем |
+| `evidence_level` | `E0` / `E1` / `E2` / `E3` по [[docs/architecture/decisions/ADR-0003-one-practice-per-file]] |
 | `evidence` | commit/PR/defect/тест |
 | `created` | Дата добавления |
 | `decided` | Дата accept/reject (пусто, пока `new`/`triaged`) |
@@ -57,3 +58,6 @@ merge-конфликтов (в отличие от общей таблицы).
 `source` и `added_by` **обязательны** — происхождение по
 [[docs/architecture/decisions/ADR-0001-provenance-required]]. Секреты, токены и
 приватные хосты не записывать.
+
+После принятия файл кандидата остаётся журналом решения, а применяемый source of
+truth создаётся по `target`. Его стабильный `id` и имя сохраняются.

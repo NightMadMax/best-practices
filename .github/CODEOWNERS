@@ -1,0 +1,22 @@
+# Repository fallback and governance files
+* @NightMadMax
+/.github/ @NightMadMax
+
+# Executable validation and tests
+/scripts/ @NightMadMax
+/tests/ @NightMadMax
+/Makefile @NightMadMax
+
+# Intake and stack practices
+/candidates/ @NightMadMax
+/practices/1c/ @NightMadMax
+/practices/web/ @NightMadMax
+/practices/common/ @NightMadMax
+/practices/tools/ @NightMadMax
+/practices/anti-patterns/ @NightMadMax
+/practices/prompts/ @NightMadMax
+/practices/snippets/ @NightMadMax
+
+# Workflow implementation
+/.agents/skills/ @NightMadMax
+/.claude/skills/ @NightMadMax
