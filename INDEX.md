@@ -21,6 +21,7 @@
 | [[practices/prompts/README]] | Промпты и skill-паттерны |
 | [[practices/snippets/README]] | Сниппеты и конфиги |
 | [[docs/README]] | Индекс каталога `docs/` |
+| [[docs/quality/DEFECTS]] | Журнал дефектов проекта |
 | [[docs/architecture/decisions/README]] | Каталог решений (ADR) |
 | [[docs/architecture/decisions/ADR-0001-provenance-required]] | Происхождение обязательно для каждой записи |
 | [[docs/architecture/decisions/ADR-0002-tool-verdicts-tech-radar]] | Вердикты инструментов по tech-radar |
