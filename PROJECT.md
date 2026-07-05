@@ -20,6 +20,9 @@ related:
 ## Scope
 
 - Практики по 1С, вебу и общие практики в `practices/`.
+- Конвейер из трёх этапов: импорт уроков в кандидаты
+  (`harvest-practice-candidates`), оценка и принятие (`review-practice-candidates`),
+  доставка в проекты по pull-модели (`apply-best-practices`).
 - Выжимки уроков из проектов перед их удалением.
 - Командное использование через общий GitHub-репозиторий и pull requests.
 

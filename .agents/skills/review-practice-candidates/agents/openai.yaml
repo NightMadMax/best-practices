@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Practice Candidates"
+  short_description: "Evaluate staged candidates and accept them into practices/"
+  default_prompt: "Use $review-practice-candidates to evaluate candidates in docs/quality/PRACTICE_CANDIDATES.md, then accept them into practices/<stack>/ in the canonical format or reject them with a recorded reason."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Apply Best Practices"
+  short_description: "Pull relevant practices from Best Practices into the current project"
+  default_prompt: "Use $apply-best-practices to detect this project's stack, read the matching practices/<stack> and practices/common from the Best Practices base, and apply the relevant lessons as concrete edits that cite their source."
