@@ -1,4 +1,4 @@
-.PHONY: test validate check
+.PHONY: test validate freshness check
 
 test:
 	python3 -m unittest discover -s tests -v
@@ -6,4 +6,7 @@ test:
 validate:
 	python3 scripts/validate.py
 
-check: test validate
+freshness:
+	python3 scripts/validate.py --strict-freshness
+
+check: test validate freshness

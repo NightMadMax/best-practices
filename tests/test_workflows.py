@@ -57,6 +57,7 @@ created: 2026-07-06
 last_verified: 2026-07-06
 review_by: 2027-01-06
 supersedes:
+superseded_by:
 conflicts_with:
 candidate: candidates/{filename}
 ---
@@ -218,6 +219,7 @@ created: 2026-07-05
 last_verified: 2026-07-05
 review_by: 2026-10-05
 supersedes:
+superseded_by:
 conflicts_with:
 candidate: candidates/PC-2026-001-example.md
 ---

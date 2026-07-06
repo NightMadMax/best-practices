@@ -34,7 +34,8 @@ lowercase hex. Legacy-файлы `PC-YYYY-NNN-slug.md` остаются вали
 `practices/<stack>/PC-YYYY-HHHHHHHHHHHH-slug.md` (либо legacy `NNN`).
 
 Кроме provenance обязательны `tags`, `applies_to`, `does_not_apply_to`,
-`owner`, `last_verified`, `review_by`, `supersedes`, `conflicts_with` и ссылка
+`owner`, `last_verified`, `review_by`, `supersedes`, `superseded_by`,
+`conflicts_with` и ссылка
 `candidate` на журнал решения.
 
 - Статусы: `trial`, `accepted`, `deprecated`, `superseded`.
@@ -44,6 +45,13 @@ lowercase hex. Legacy-файлы `PC-YYYY-NNN-slug.md` остаются вали
 - `evidence` и `evidence_level` должны совпадать со связанным accepted
   candidate. Новое подтверждение добавляется синхронно в оба файла через
   review, а не повышается только в practice.
+- Даты: `created <= last_verified < review_by`.
+- `superseded` требует ссылку на существующий ID в `superseded_by`; это
+  terminal status. `supersedes` и `conflicts_with` также содержат существующие
+  practice ID через запятую. Replacement остаётся `trial`/`accepted`, а
+  `supersedes`/`superseded_by` образуют двустороннюю связь.
+- Матрица переходов определена в
+  [[docs/architecture/decisions/ADR-0005-practice-lifecycle-invariants]].
 
 ## Repository safety
 

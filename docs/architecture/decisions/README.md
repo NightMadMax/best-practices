@@ -24,3 +24,4 @@ Decision, Consequences. Записи не удаляются: устаревше
 | [[docs/architecture/decisions/ADR-0002-tool-verdicts-tech-radar]] | Вердикты инструментов — по кольцам tech-radar | accepted |
 | [[docs/architecture/decisions/ADR-0003-one-practice-per-file]] | Одна практика — один файл, lifecycle и evidence levels | accepted |
 | [[docs/architecture/decisions/ADR-0004-collision-resistant-candidate-ids]] | Новые candidate ID не требуют централизованной нумерации | accepted |
+| [[docs/architecture/decisions/ADR-0005-practice-lifecycle-invariants]] | Исполнимые lifecycle, chronology и replacement invariants | accepted |

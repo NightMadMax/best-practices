@@ -38,6 +38,7 @@
 | [[docs/architecture/decisions/ADR-0002-tool-verdicts-tech-radar]] | Вердикты инструментов по tech-radar |
 | [[docs/architecture/decisions/ADR-0003-one-practice-per-file]] | Одна практика — один файл, lifecycle и evidence levels |
 | [[docs/architecture/decisions/ADR-0004-collision-resistant-candidate-ids]] | Collision-resistant candidate ID без общего счётчика |
+| [[docs/architecture/decisions/ADR-0005-practice-lifecycle-invariants]] | Lifecycle, chronology и replacement invariants практик |
 
 ## Скилы конвейера
 
