@@ -16,6 +16,58 @@ import validate  # noqa: E402
 
 
 class WorkflowTests(unittest.TestCase):
+    def _write_accepted_pair(self, root, stack, suffix, slug):
+        candidate_id = f"PC-2026-{suffix}"
+        filename = f"{candidate_id}-{slug}.md"
+        (root / "candidates").mkdir(exist_ok=True)
+        (root / "practices" / stack).mkdir(parents=True, exist_ok=True)
+        labels = validate.BODY_FIELDS[stack]
+        candidate_body = "\n".join(f"- **{label}:** verified {label.lower()}" for label in labels)
+        practice_body = candidate_body + "\n- **Проверка:** automated fixture"
+        candidate = f'''---
+id: {candidate_id}
+status: accepted
+source: fixture
+added_by: test
+stack: {stack}
+target: practices/{stack}/{filename}
+evidence_level: E2
+evidence: fixture-test
+created: 2026-07-06
+decided: 2026-07-06
+---
+
+# {stack} fixture
+
+{candidate_body}
+'''
+        practice = f'''---
+id: {candidate_id}
+status: accepted
+source: fixture
+added_by: test
+stack: {stack}
+tags: fixture
+applies_to: fixture projects
+does_not_apply_to: none
+evidence_level: E2
+evidence: fixture-test
+owner: test
+created: 2026-07-06
+last_verified: 2026-07-06
+review_by: 2027-01-06
+supersedes:
+conflicts_with:
+candidate: candidates/{filename}
+---
+
+# {stack} fixture
+
+{practice_body}
+'''
+        (root / "candidates" / filename).write_text(candidate, encoding="utf-8")
+        (root / "practices" / stack / filename).write_text(practice, encoding="utf-8")
+
     @mock.patch("new_candidate.secrets.token_hex", return_value="a1b2c3d4e5f6")
     def test_generator_allocates_collision_resistant_id_and_escapes_metadata(self, _token_hex):
         with tempfile.TemporaryDirectory() as directory:
@@ -57,6 +109,60 @@ class WorkflowTests(unittest.TestCase):
             project = Path(directory)
             (project / "package.json").write_text("{}\n", encoding="utf-8")
             self.assertEqual({"common", "web"}, practice_report.detect_stacks(project))
+
+    def test_default_sections_include_every_cross_cutting_category(self):
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            self.assertEqual(
+                {"common", "tools", "anti-patterns", "prompts", "snippets"},
+                practice_report.select_sections(project),
+            )
+
+    def test_explicit_stack_still_includes_cross_cutting_sections(self):
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            self.assertEqual(
+                {"1c", "common", "tools", "anti-patterns", "prompts", "snippets"},
+                practice_report.select_sections(project, {"1c"}),
+            )
+
+    def test_cli_report_includes_all_seven_sections_end_to_end(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "base"
+            project = Path(directory) / "consumer"
+            root.mkdir()
+            project.mkdir()
+            suffixes = {
+                "1c": "000000000001",
+                "web": "000000000002",
+                "common": "000000000003",
+                "tools": "000000000004",
+                "anti-patterns": "000000000005",
+                "prompts": "000000000006",
+                "snippets": "000000000007",
+            }
+            for stack, suffix in suffixes.items():
+                self._write_accepted_pair(root, stack, suffix, stack.replace("-", ""))
+            command = [
+                sys.executable,
+                str(ROOT / "scripts/practice_report.py"),
+                "--root",
+                str(root),
+                "--project",
+                str(project),
+                "--section",
+                "1c",
+                "--section",
+                "web",
+                "--format",
+                "json",
+            ]
+            result = subprocess.run(command, check=True, capture_output=True, text=True)
+            report = json.loads(result.stdout)
+            self.assertEqual(set(validate.ALLOWED_STACKS), set(report["sections"]))
+            self.assertEqual({"1c", "web"}, set(report["stacks"]))
+            self.assertEqual(report["stacks"], report["detected_stacks"])
+            self.assertEqual(set(validate.ALLOWED_STACKS), {item["stack"] for item in report["practices"]})
 
     def test_manifest_records_explicit_outcome(self):
         with tempfile.TemporaryDirectory() as directory:

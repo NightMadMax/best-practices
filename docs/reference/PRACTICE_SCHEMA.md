@@ -66,3 +66,10 @@ Manifest создаётся в корне проекта-потребителя 
 `schema_version: 1`. В `practices` ключом служит стабильный ID, а запись хранит
 outcome, путь source practice, commit базы, дату и notes. Manifest фиксирует
 решение потребителя, но не копирует содержание практики.
+
+## Applicability report
+
+JSON report сохраняет legacy-поле `stacks` и добавляет равное ему
+`detected_stacks`, а `sections` перечисляет полный набор просмотренных разделов.
+По умолчанию это detected stack sections + `common` + `tools`,
+`anti-patterns`, `prompts`, `snippets`.

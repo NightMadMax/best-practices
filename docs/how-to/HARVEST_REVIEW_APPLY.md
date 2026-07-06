@@ -41,6 +41,11 @@ Trial-практики скрыты по умолчанию. Для осозна
 `--include-trial`. После проверки diff и фактического применения явно запиши
 результат:
 
+Default report включает обнаруженные stack-секции, `common` и все
+cross-cutting sections (`tools`, `anti-patterns`, `prompts`, `snippets`), чтобы
+принятая практика не была молча пропущена. Для неоднозначного multi-stack
+проекта укажи повторяемый `--section`, например `--section 1c --section web`.
+
 ```sh
 python3 scripts/practice_report.py \
   --project /path/to/consumer \
