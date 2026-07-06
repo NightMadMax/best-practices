@@ -80,6 +80,13 @@ class CandidateValidationTests(unittest.TestCase):
             path.write_text(VALID_CANDIDATE, encoding="utf-8")
             self.assertEqual([], validate.validate_repository(root, check_links=False))
 
+    def test_collision_resistant_candidate_id_passes(self):
+        with RepositoryFixture() as root:
+            content = VALID_CANDIDATE.replace("PC-2026-001", "PC-2026-a1b2c3d4e5f6")
+            path = root / "candidates/PC-2026-a1b2c3d4e5f6-check-input.md"
+            path.write_text(content, encoding="utf-8")
+            self.assertEqual([], validate.validate_repository(root, check_links=False))
+
     def test_id_must_match_filename(self):
         with RepositoryFixture() as root:
             path = root / "candidates/PC-2026-002-check-input.md"
@@ -128,11 +135,28 @@ class CandidateValidationTests(unittest.TestCase):
     def test_secret_and_machine_path_are_rejected(self):
         with RepositoryFixture() as root:
             path = root / "candidates/PC-2026-001-check-input.md"
-            content = VALID_CANDIDATE + "\nToken: ghp_abcdefghijklmnopqrstuvwxyz123456\n/Users/alice/project\n"
+            token = "ghp_" + "abcdefghijklmnopqrstuvwxyz123456"
+            local_path = "/" + "Users/alice/project"
+            content = VALID_CANDIDATE + f"\nToken: {token}\n{local_path}\n"
             path.write_text(content, encoding="utf-8")
             messages = [p.message for p in validate.validate_repository(root, check_links=False)]
             self.assertTrue(any("GitHub token" in message for message in messages))
             self.assertTrue(any("machine-specific path" in message for message in messages))
+
+    def test_secret_outside_candidate_is_rejected(self):
+        with RepositoryFixture() as root:
+            token = "ghp_" + "abcdefghijklmnopqrstuvwxyz123456"
+            (root / "README.md").write_text(f"Token: {token}\n", encoding="utf-8")
+            messages = [p.message for p in validate.validate_repository(root, check_links=False)]
+            self.assertTrue(any("GitHub token" in message for message in messages))
+
+    def test_secret_scan_allows_explicit_fixture_line(self):
+        with RepositoryFixture() as root:
+            token = "ghp_" + "abcdefghijklmnopqrstuvwxyz123456"
+            (root / "fixture.txt").write_text(
+                f"Token: {token}  # secret-scan: allow\n", encoding="utf-8"
+            )
+            self.assertEqual([], validate.validate_repository(root, check_links=False))
 
     def test_broken_wikilink_is_rejected(self):
         with RepositoryFixture() as root:
@@ -168,6 +192,30 @@ class CandidateValidationTests(unittest.TestCase):
             practice.write_text(VALID_PRACTICE.replace("status: trial", "status: accepted"), encoding="utf-8")
             messages = [p.message for p in validate.validate_repository(root, check_links=False)]
             self.assertTrue(any("requires evidence_level E2" in message for message in messages))
+
+    def test_practice_evidence_must_match_accepted_candidate(self):
+        with RepositoryFixture() as root:
+            candidate = root / "candidates/PC-2026-001-check-input.md"
+            accepted = VALID_CANDIDATE.replace("status: triaged", "status: accepted")
+            accepted = accepted.replace("decided:\n", "decided: 2026-07-05\n")
+            candidate.write_text(accepted, encoding="utf-8")
+            practice = root / "practices/common/PC-2026-001-check-input.md"
+            changed = VALID_PRACTICE.replace('evidence: "test-case"', 'evidence: "unreviewed"')
+            practice.write_text(changed, encoding="utf-8")
+            messages = [p.message for p in validate.validate_repository(root, check_links=False)]
+            self.assertTrue(any("field 'evidence' differs" in message for message in messages))
+
+    def test_practice_evidence_level_must_match_accepted_candidate(self):
+        with RepositoryFixture() as root:
+            candidate = root / "candidates/PC-2026-001-check-input.md"
+            accepted = VALID_CANDIDATE.replace("status: triaged", "status: accepted")
+            accepted = accepted.replace("decided:\n", "decided: 2026-07-05\n")
+            candidate.write_text(accepted, encoding="utf-8")
+            practice = root / "practices/common/PC-2026-001-check-input.md"
+            changed = VALID_PRACTICE.replace("evidence_level: E1", "evidence_level: E2")
+            practice.write_text(changed, encoding="utf-8")
+            messages = [p.message for p in validate.validate_repository(root, check_links=False)]
+            self.assertTrue(any("field 'evidence_level' differs" in message for message in messages))
 
     def test_invalid_calendar_date_is_rejected(self):
         with RepositoryFixture() as root:

@@ -26,9 +26,10 @@ merge-конфликтов (в отличие от общей таблицы).
 
 ## Как прислать кандидата
 
-См. [[CONTRIBUTING]]. Кратко: скопировать [[candidates/_TEMPLATE|_TEMPLATE.md]]
-в `candidates/PC-<год>-<номер>-<slug>.md`, заполнить и открыть PR. Мейнтейнер
-разбирает через skill `review-practice-candidates`.
+См. [[CONTRIBUTING]]. Кратко: создать файл через `scripts/new_candidate.py`,
+получить collision-resistant ID `PC-<год>-<12hex>`, заполнить тело и открыть
+PR. [[candidates/_TEMPLATE|_TEMPLATE.md]] служит справочником полей. Мейнтейнер
+разбирает кандидата через skill `review-practice-candidates`.
 
 ## Статус-модель (поле `status` во frontmatter)
 

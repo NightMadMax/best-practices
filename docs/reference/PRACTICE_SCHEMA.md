@@ -17,19 +17,21 @@ related:
 
 ## Candidate
 
-Путь: `candidates/PC-YYYY-NNN-slug.md`.
+Путь новых записей: `candidates/PC-YYYY-HHHHHHHHHHHH-slug.md`, где `H` —
+lowercase hex. Legacy-файлы `PC-YYYY-NNN-slug.md` остаются валидными.
 
 Обязательные поля: `id`, `status`, `source`, `added_by`, `stack`, `target`,
 `evidence_level`, `evidence`, `created`, `decided`.
 
 - Статусы: `new`, `triaged`, `accepted`, `rejected`.
-- `target` сохраняет basename: `practices/<stack>/PC-YYYY-NNN-slug.md`.
+- `target` сохраняет basename в `practices/<stack>/`.
 - `accepted`/`rejected` требуют `decided`; остальные требуют пустое поле.
 - Harvest выставляет только `E0` или `E1`.
 
 ## Practice
 
-Путь: `practices/<stack>/PC-YYYY-NNN-slug.md`.
+Путь совпадает с basename кандидата:
+`practices/<stack>/PC-YYYY-HHHHHHHHHHHH-slug.md` (либо legacy `NNN`).
 
 Кроме provenance обязательны `tags`, `applies_to`, `does_not_apply_to`,
 `owner`, `last_verified`, `review_by`, `supersedes`, `conflicts_with` и ссылка
@@ -39,6 +41,15 @@ related:
 - `trial` требует минимум `E1`.
 - `accepted` требует минимум `E2`.
 - `deprecated` и `superseded` не доставляются потребителям.
+- `evidence` и `evidence_level` должны совпадать со связанным accepted
+  candidate. Новое подтверждение добавляется синхронно в оба файла через
+  review, а не повышается только в practice.
+
+## Repository safety
+
+Validator проверяет secret patterns во всех tracked и новых non-ignored
+файлах. Строка тестового fixture может быть исключена только явным маркером
+`secret-scan: allow` на той же строке; маркер требует review.
 
 ## Evidence levels
 

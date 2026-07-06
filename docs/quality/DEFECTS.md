@@ -2,7 +2,7 @@
 type: defect-log
 status: active
 owner: project
-last_verified: 2026-07-05
+last_verified: 2026-07-06
 source_of_truth: repository
 related:
   - "[[docs/README]]"
@@ -18,6 +18,72 @@ related:
 
 ## Open
 
+### Secret-проверка не охватывает репозиторий целиком
+
+- **Обнаружено:** 2026-07-06
+- **Описание:** `SECRET_PATTERNS` применяется только к `candidates/PC-*.md` и
+  `practices/*/PC-*.md`. Реальный token, private key, private host или
+  machine-specific path в `README.md`, skills, scripts, tests и прочей
+  документации не влияет на `make check`, хотя правила проекта и PR template
+  запрещают секреты во всём репозитории.
+- **Evidence:** fixture с token в корневом `README.md` и без candidate/practice
+  проходит `validate_repository()` без проблем.
+- **Требуемое решение:** отделить repository-wide secret scan от schema
+  validation, определить исключения/fixtures и покрыть каждый класс tracked
+  файлов негативными тестами.
+
+### Default consumer report пропускает кросс-разделы практик
+
+- **Обнаружено:** 2026-07-06
+- **Описание:** skill `apply-best-practices` требует читать `tools`,
+  `anti-patterns`, `prompts` и `snippets` по контексту, но
+  `practice_report.py` по умолчанию выбирает только `common`, `web` и `1c`.
+  После наполнения кросс-разделов golden-path команда из how-to будет молча
+  выдавать неполный отчёт; явный `--stack` технически возможен, но не описан
+  как обязательная компенсация.
+- **Требуемое решение:** определить машинные правила применимости кросс-разделов
+  либо явно включать их в report с фильтрацией; добавить end-to-end fixtures
+  для каждой категории и синхронизировать skill/how-to/CLI.
+
+### Последовательные ID кандидатов конфликтуют между параллельными PR
+
+- **Обнаружено:** 2026-07-06
+- **Описание:** `scripts/new_candidate.py` вычисляет ID как `max + 1` по
+  локальной ветке. Два контрибьютора, одновременно начавшие от одного `main`,
+  оба получают `PC-2026-002`; их разные файлы имеют один ID, и второй PR после
+  первого не проходит validator. Модель «один файл — один кандидат» уменьшает
+  конфликты содержимого, но централизованный последовательный номер сохраняет
+  конфликт координации, ради устранения которого модель была введена.
+- **Evidence:** воспроизводится двумя независимыми временными checkout-state:
+  `next_id(..., 2026)` в обоих возвращает `PC-2026-002`.
+- **Требуемое решение:** выбрать collision-resistant ID/namespace либо
+  серверное резервирование номера; добавить тест конкурентного сценария и
+  обновить ADR, schema, генератор и contribution workflow согласованно.
+
+### Validator не связывает evidence кандидата и принятой практики
+
+- **Обнаружено:** 2026-07-06
+- **Описание:** pair-validation сравнивает только `id`, `source`, `added_by` и
+  `stack`. Поля `evidence` и `evidence_level` можно повысить или заменить только
+  в practice-файле, оставив журнал решения кандидата неизменным; это позволяет
+  получить `status: accepted`/`E2` без подтверждающего E2 evidence в candidate.
+- **Требуемое решение:** определить допустимую модель эволюции evidence и
+  проверять её явно. Для текущей модели переноса provenance — как минимум
+  требовать совпадение `evidence`/`evidence_level` при accept и покрыть
+  негативными тестами.
+
+### Skill `harvest-practice-candidates` ссылается на несуществующий ADR
+
+- **Обнаружено:** 2026-07-06
+- **Описание:** обязательный шаг skill требует полностью прочитать
+  `docs/architecture/decisions/ADR-0003-candidate-staging-model.md`, но такого
+  файла в репозитории нет; фактический ADR называется
+  `ADR-0003-one-practice-per-file.md`. Из-за stale-ссылки агент получает
+  ошибку до начала харвеста и вынужден угадывать замену.
+- **Требуемое решение:** исправить ссылку в
+  `.agents/skills/harvest-practice-candidates/SKILL.md` и добавить контрактный
+  тест, проверяющий существование локальных Markdown-ссылок/путей из skills.
+
 ### `AGENTS.md` содержит незаполненные шаблонные Commands и Done when
 
 - **Обнаружено:** 2026-07-05
@@ -30,19 +96,20 @@ related:
   потому что собственное правило проекта запрещает редактировать `AGENTS.md`
   или `CLAUDE.md` после загрузки инструкций.
 
+## Fixed
+
 ### Защита `main` описана, но не включена на GitHub
 
 - **Обнаружено:** 2026-07-05
-- **Описание:** `CONTRIBUTING.md` утверждает, что `main` защищён и изменения
-  принимаются только через pull request. Проверка
-  `GET /repos/NightMadMax/best-practices/branches/main/protection` вернула
-  `404 Branch not protected`. Поэтому заявленная модель ревью фактически не
-  обеспечивается: прямой push и слияние без обязательных проверок не исключены.
-- **Требуемое решение:** после согласования владельца включить ruleset или
-  branch protection с обязательным PR, review и status checks; затем повторно
-  проверить через GitHub API. Удалённые настройки без согласования не менялись.
-
-## Fixed
+- **Исправлено:** 2026-07-06, GitHub repository ruleset `Protect main`
+  (`id: 18538769`; external configuration, без repository commit)
+- **Описание:** первоначально `CONTRIBUTING.md` описывал защиту, которой не было.
+  На 2026-07-06 активный ruleset для default branch требует pull request,
+  один approval, Code Owner review, разрешение review threads и status check
+  `validate`, а также запрещает deletion и non-fast-forward updates.
+- **Root cause:** governance был задокументирован до применения серверной
+  настройки; проверка только legacy branch-protection endpoint недостаточна,
+  потому что repository rulesets проверяются отдельным API.
 
 ### Одиночная таблица кандидатов давала merge-конфликты при командном приёме
 

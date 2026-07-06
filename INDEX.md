@@ -27,6 +27,7 @@
 | [[docs/research/BEST_PRACTICES_MULTI_STACK_RESEARCH_2026-07-05]] | Исследование multi-stack консолидации и онбординга |
 | [[docs/research/END_TO_END_PILOT_2026-07-05]] | End-to-end pilot конвейера практик |
 | [[docs/research/AGENTS_UPDATE_PROPOSAL_2026-07-05]] | Предложение Commands и Done when для следующей сессии |
+| [[docs/reviews/FULL_CODE_REVIEW_2026-07-06]] | Полный code review, harvest-анализ и оценка зрелости |
 | [[docs/tutorials/FIRST_CONTRIBUTION]] | Tutorial первого вклада |
 | [[docs/how-to/HARVEST_REVIEW_APPLY]] | How-to полного конвейера практики |
 | [[docs/reference/PRACTICE_SCHEMA]] | Reference схемы данных и manifest |
@@ -34,6 +35,7 @@
 | [[docs/architecture/decisions/ADR-0001-provenance-required]] | Происхождение обязательно для каждой записи |
 | [[docs/architecture/decisions/ADR-0002-tool-verdicts-tech-radar]] | Вердикты инструментов по tech-radar |
 | [[docs/architecture/decisions/ADR-0003-one-practice-per-file]] | Одна практика — один файл, lifecycle и evidence levels |
+| [[docs/architecture/decisions/ADR-0004-collision-resistant-candidate-ids]] | Collision-resistant candidate ID без общего счётчика |
 
 ## Скилы конвейера
 

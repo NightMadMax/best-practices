@@ -1,4 +1,5 @@
 import json
+from unittest import mock
 import subprocess
 import sys
 import tempfile
@@ -15,7 +16,8 @@ import validate  # noqa: E402
 
 
 class WorkflowTests(unittest.TestCase):
-    def test_generator_allocates_next_id_and_escapes_metadata(self):
+    @mock.patch("new_candidate.secrets.token_hex", return_value="a1b2c3d4e5f6")
+    def test_generator_allocates_collision_resistant_id_and_escapes_metadata(self, _token_hex):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "candidates").mkdir()
@@ -32,15 +34,23 @@ class WorkflowTests(unittest.TestCase):
                 created="2026-07-05",
             )
             path = new_candidate.create_candidate(root, args)
-            self.assertEqual("PC-2026-005-safe-boundaries.md", path.name)
+            self.assertEqual("PC-2026-a1b2c3d4e5f6-safe-boundaries.md", path.name)
             fields, body, problems = validate.parse_frontmatter(path)
             self.assertEqual([], problems)
             self.assertEqual('project: docs/"quoted"', fields["source"])
             self.assertEqual(
-                "practices/common/PC-2026-005-safe-boundaries.md",
+                "practices/common/PC-2026-a1b2c3d4e5f6-safe-boundaries.md",
                 fields["target"],
             )
             self.assertIn("<заполнить>", body)
+
+    @mock.patch("new_candidate.secrets.token_hex", side_effect=["a1b2c3d4e5f6", "deadbeefcafe"])
+    def test_generator_retries_local_id_collision(self, _token_hex):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "candidates").mkdir()
+            (root / "candidates/PC-2026-a1b2c3d4e5f6-existing.md").write_text("old", encoding="utf-8")
+            self.assertEqual("PC-2026-deadbeefcafe", new_candidate.new_id(root, 2026))
 
     def test_stack_detection_always_includes_common(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -7,8 +7,8 @@
 ## Прислать кандидата
 
 1. Форкни репозиторий или заведи ветку `candidate/<кратко>`.
-2. Скопируй `candidates/_TEMPLATE.md` в
-   `candidates/PC-<год>-<номер>-<slug>.md` (номер — следующий свободный).
+2. Создай файл через `scripts/new_candidate.py`. Генератор выдаёт
+   collision-resistant ID формата `PC-<год>-<12hex>`; не назначай ID вручную.
 3. Заполни frontmatter и тело. **Обязательны** `source` (из какого проекта) и
    `added_by` (от кого) — происхождение по
    [ADR-0001](docs/architecture/decisions/ADR-0001-provenance-required.md).

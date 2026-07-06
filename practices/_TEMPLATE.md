@@ -1,5 +1,5 @@
 ---
-id: PC-2026-000
+id: PC-2026-a1b2c3d4e5f6
 status: trial
 source: "<Проект: артефакт>"
 added_by: "<пользователь / автор / агент>"
@@ -15,7 +15,7 @@ last_verified: 2026-01-01
 review_by: 2026-04-01
 supersedes:
 conflicts_with:
-candidate: candidates/PC-2026-000-example.md
+candidate: candidates/PC-2026-a1b2c3d4e5f6-example.md
 ---
 
 # <Название практики>

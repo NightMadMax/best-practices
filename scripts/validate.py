@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
+import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import date
@@ -38,7 +40,7 @@ REQUIRED_FIELDS = (
     "decided",
 )
 FILENAME_RE = re.compile(
-    r"^(?P<id>PC-(?P<year>\d{4})-(?P<number>\d{3}))-(?P<slug>[a-z0-9]+(?:-[a-z0-9]+)*)\.md$"
+    r"^(?P<id>PC-(?P<year>\d{4})-(?P<sequence>\d{3}|[0-9a-f]{12}))-(?P<slug>[a-z0-9]+(?:-[a-z0-9]+)*)\.md$"
 )
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 WIKILINK_RE = re.compile(r"\[\[([^\]#|]+?)(?:#[^\]|]+)?(?:\\?\|[^\]]+)?\]\]")
@@ -50,7 +52,7 @@ SECRET_PATTERNS = (
         r"(?i)\b(?:password|passwd|api[_-]?key|secret|token)\s*[:=]\s*['\"]?[A-Za-z0-9_./+=-]{12,}"
     )),
     ("private host", re.compile(r"\b(?:10(?:\.\d{1,3}){3}|192\.168(?:\.\d{1,3}){2}|172\.(?:1[6-9]|2\d|3[01])(?:\.\d{1,3}){2})\b")),
-    ("machine-specific path", re.compile(r"(?:/Users/[^/\s]+|/home/[^/\s]+|[A-Za-z]:\\Users\\[^\\\s]+)")),
+    ("machine-specific path", re.compile(r"(?:/Users/[^/\s]+|/home/[^/\s]+|[A-Za-z]:\\Users\\[^\\\s]+)")),  # secret-scan: allow
 )
 PRACTICE_REQUIRED_FIELDS = (
     "id",
@@ -153,7 +155,7 @@ def validate_candidate(path: Path, root: Path) -> Tuple[str, List[Problem]]:
     problems: List[Problem] = []
     match = FILENAME_RE.fullmatch(path.name)
     if not match:
-        problems.append(Problem(path, "filename must match PC-YYYY-NNN-kebab-case.md"))
+        problems.append(Problem(path, "filename must match PC-YYYY-(NNN|12hex)-kebab-case.md"))
 
     fields, body, frontmatter_problems = parse_frontmatter(path)
     problems.extend(frontmatter_problems)
@@ -219,7 +221,7 @@ def validate_practice(path: Path, root: Path) -> Tuple[str, List[Problem]]:
     problems: List[Problem] = []
     match = FILENAME_RE.fullmatch(path.name)
     if not match:
-        return "", [Problem(path, "practice filename must match PC-YYYY-NNN-kebab-case.md")]
+        return "", [Problem(path, "practice filename must match PC-YYYY-(NNN|12hex)-kebab-case.md")]
 
     fields, body, frontmatter_problems = parse_frontmatter(path)
     problems.extend(frontmatter_problems)
@@ -307,6 +309,38 @@ def validate_links(root: Path) -> List[Problem]:
     return problems
 
 
+def _repository_files(root: Path) -> List[Path]:
+    result = subprocess.run(
+        ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+        cwd=str(root),
+        capture_output=True,
+    )
+    if result.returncode == 0:
+        return [root / os.fsdecode(item) for item in result.stdout.split(b"\0") if item]
+    ignored_parts = {".git", ".venv", "node_modules", "__pycache__"}
+    return [path for path in root.rglob("*") if path.is_file() and not ignored_parts.intersection(path.parts)]
+
+
+def scan_repository_secrets(root: Path) -> List[Problem]:
+    """Scan repository text outside candidate/practice files for unsafe literals."""
+    problems: List[Problem] = []
+    for path in _repository_files(root):
+        relative = path.relative_to(root)
+        if path.name.startswith("PC-") and relative.parts[:1] in {("candidates",), ("practices",)}:
+            continue
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except (UnicodeDecodeError, OSError):
+            continue
+        for line_number, line in enumerate(lines, start=1):
+            if "secret-scan: allow" in line:
+                continue
+            for label, pattern in SECRET_PATTERNS:
+                if pattern.search(line):
+                    problems.append(Problem(path, f"possible {label} found on line {line_number}"))
+    return problems
+
+
 def validate_repository(root: Path, check_links: bool = True) -> List[Problem]:
     problems: List[Problem] = []
     seen_ids: Dict[str, Path] = {}
@@ -330,12 +364,16 @@ def validate_repository(root: Path, check_links: bool = True) -> List[Problem]:
                 for field in ("id", "source", "added_by", "stack"):
                     if candidate_fields.get(field) != practice_fields.get(field):
                         problems.append(Problem(path, f"field {field!r} differs from accepted candidate"))
+                for field in ("evidence", "evidence_level"):
+                    if candidate_fields.get(field) != practice_fields.get(field):
+                        problems.append(Problem(path, f"field {field!r} differs from accepted candidate"))
                 if candidate_fields.get("status") != "accepted":
                     problems.append(Problem(path, "linked candidate must have status 'accepted'"))
                 if candidate_fields.get("target") != str(path.relative_to(root)):
                     problems.append(Problem(path, "candidate target does not point to this practice"))
     if check_links:
         problems.extend(validate_links(root))
+    problems.extend(scan_repository_secrets(root))
     return problems
 
 

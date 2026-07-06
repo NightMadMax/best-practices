@@ -44,6 +44,14 @@ class RepositoryContractTests(unittest.TestCase):
                 self.assertEqual(canonical_value.group(1), pointer_value.group(1))
             self.assertIn("../../../.agents/skills/", pointer)
 
+    def test_harvest_skill_required_adr_exists(self):
+        skill = (ROOT / ".agents/skills/harvest-practice-candidates/SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        relative = "docs/architecture/decisions/ADR-0003-one-practice-per-file.md"
+        self.assertIn(relative, skill)
+        self.assertTrue((ROOT / relative).is_file())
+
 
 if __name__ == "__main__":
     unittest.main()
