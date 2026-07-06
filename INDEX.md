@@ -27,6 +27,7 @@
 | [[docs/research/BEST_PRACTICES_MULTI_STACK_RESEARCH_2026-07-05]] | Исследование multi-stack консолидации и онбординга |
 | [[docs/research/END_TO_END_PILOT_2026-07-05]] | End-to-end pilot конвейера практик |
 | [[docs/research/AGENTS_UPDATE_PROPOSAL_2026-07-05]] | Предложение Commands и Done when для следующей сессии |
+| [[docs/research/MODERNIZATION_PILOT_2026-07-06]] | Расширенный pilot трёх consumer snapshots и metrics |
 | [[docs/reviews/FULL_CODE_REVIEW_2026-07-06]] | Полный code review, harvest-анализ и оценка зрелости |
 | [[docs/reviews/P1_TRUST_HARDENING_REVIEW_2026-07-06]] | Review реализации P1 trust hardening |
 | [[docs/reviews/CROSS_SECTION_REPORT_REVIEW_2026-07-06]] | Review полноты cross-section consumer report |
@@ -34,6 +35,7 @@
 | [[docs/tutorials/FIRST_CONTRIBUTION]] | Tutorial первого вклада |
 | [[docs/how-to/HARVEST_REVIEW_APPLY]] | How-to полного конвейера практики |
 | [[docs/reference/PRACTICE_SCHEMA]] | Reference схемы данных и manifest |
+| [[docs/reference/PRACTICE_METRICS]] | Reference метрик базы и consumer outcomes |
 | [[docs/architecture/decisions/README]] | Каталог решений (ADR) |
 | [[docs/architecture/decisions/ADR-0001-provenance-required]] | Происхождение обязательно для каждой записи |
 | [[docs/architecture/decisions/ADR-0002-tool-verdicts-tech-radar]] | Вердикты инструментов по tech-radar |

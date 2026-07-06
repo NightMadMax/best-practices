@@ -1,4 +1,4 @@
-.PHONY: test validate freshness check
+.PHONY: test validate freshness metrics check
 
 test:
 	python3 -m unittest discover -s tests -v
@@ -8,5 +8,8 @@ validate:
 
 freshness:
 	python3 scripts/validate.py --strict-freshness
+
+metrics:
+	python3 scripts/practice_metrics.py
 
 check: test validate freshness

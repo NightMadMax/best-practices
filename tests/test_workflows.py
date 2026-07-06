@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import new_candidate  # noqa: E402
 import practice_report  # noqa: E402
+import practice_metrics  # noqa: E402
 import validate  # noqa: E402
 
 
@@ -183,6 +184,28 @@ candidate: candidates/{filename}
             record = data["practices"]["PC-2026-001"]
             self.assertEqual("applied", record["outcome"])
             self.assertEqual("a" * 40, record["source_commit"])
+
+    def test_metrics_aggregate_recorded_consumer_outcomes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "base"
+            consumer = Path(directory) / "consumer"
+            root.mkdir()
+            consumer.mkdir()
+            self._write_accepted_pair(root, "common", "000000000001", "fixture")
+            manifest = {
+                "schema_version": 1,
+                "practices": {
+                    "PC-2026-000000000001": {"outcome": "applied"},
+                    "PC-2026-other": {"outcome": "deferred"},
+                },
+            }
+            (consumer / ".best-practices.json").write_text(
+                json.dumps(manifest), encoding="utf-8"
+            )
+            metrics = practice_metrics.collect_metrics(root, [consumer], today=practice_metrics.date(2026, 7, 6))
+            self.assertEqual(1, metrics["consumer_manifests_found"])
+            self.assertEqual({"applied": 1, "deferred": 1}, metrics["consumer_outcomes"])
+            self.assertEqual(0.5, metrics["adoption_rate"])
 
     def test_manifest_source_must_match_committed_practice(self):
         with tempfile.TemporaryDirectory() as directory:
