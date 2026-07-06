@@ -18,19 +18,6 @@ related:
 
 ## Open
 
-### Default consumer report пропускает кросс-разделы практик
-
-- **Обнаружено:** 2026-07-06
-- **Описание:** skill `apply-best-practices` требует читать `tools`,
-  `anti-patterns`, `prompts` и `snippets` по контексту, но
-  `practice_report.py` по умолчанию выбирает только `common`, `web` и `1c`.
-  После наполнения кросс-разделов golden-path команда из how-to будет молча
-  выдавать неполный отчёт; явный `--stack` технически возможен, но не описан
-  как обязательная компенсация.
-- **Требуемое решение:** определить машинные правила применимости кросс-разделов
-  либо явно включать их в report с фильтрацией; добавить end-to-end fixtures
-  для каждой категории и синхронизировать skill/how-to/CLI.
-
 ### `AGENTS.md` содержит незаполненные шаблонные Commands и Done when
 
 - **Обнаружено:** 2026-07-05
@@ -44,6 +31,16 @@ related:
   или `CLAUDE.md` после загрузки инструкций.
 
 ## Fixed
+
+### Default consumer report пропускал кросс-разделы практик
+
+- **Обнаружено:** 2026-07-06
+- **Исправлено:** 2026-07-06, commit `08b3e8a`
+- **Root cause:** CLI моделировал только language stacks, хотя knowledge model
+  также содержит cross-cutting категории.
+- **Исправление:** default report включает `common`, detected stacks и четыре
+  cross-sections; добавлены явный `--section`, совместимые JSON fields и
+  end-to-end CLI fixture со всеми семью разделами.
 
 ### Secret-проверка не охватывала репозиторий целиком
 
