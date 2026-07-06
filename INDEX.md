@@ -32,6 +32,7 @@
 | [[docs/reviews/P1_TRUST_HARDENING_REVIEW_2026-07-06]] | Review реализации P1 trust hardening |
 | [[docs/reviews/CROSS_SECTION_REPORT_REVIEW_2026-07-06]] | Review полноты cross-section consumer report |
 | [[docs/reviews/LIFECYCLE_INVARIANTS_REVIEW_2026-07-06]] | Review lifecycle, chronology и supersession invariants |
+| [[docs/reviews/METRICS_AND_PILOT_REVIEW_2026-07-06]] | Review metrics CLI и modernization pilot |
 | [[docs/tutorials/FIRST_CONTRIBUTION]] | Tutorial первого вклада |
 | [[docs/how-to/HARVEST_REVIEW_APPLY]] | How-to полного конвейера практики |
 | [[docs/reference/PRACTICE_SCHEMA]] | Reference схемы данных и manifest |

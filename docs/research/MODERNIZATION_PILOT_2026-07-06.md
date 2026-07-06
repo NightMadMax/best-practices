@@ -7,6 +7,7 @@ source_of_truth: repository
 related:
   - "[[docs/research/END_TO_END_PILOT_2026-07-05]]"
   - "[[docs/reference/PRACTICE_METRICS]]"
+  - "[[docs/reviews/METRICS_AND_PILOT_REVIEW_2026-07-06]]"
 ---
 
 # Расширенный modernization pilot — 2026-07-06
