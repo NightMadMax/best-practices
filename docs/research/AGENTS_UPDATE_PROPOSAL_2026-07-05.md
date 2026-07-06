@@ -24,6 +24,7 @@ related:
 - Repository schema and link validation: `make validate`.
 - Strict freshness check: `python3 scripts/validate.py --strict-freshness`.
 - Metrics snapshot: `make metrics`.
+- Searchable practice catalog: `make catalog`.
 
 `make check` уже включает strict freshness; отдельная команда полезна для
 диагностики freshness без полного тестового прогона.

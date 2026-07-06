@@ -37,6 +37,7 @@
 | [[docs/how-to/HARVEST_REVIEW_APPLY]] | How-to полного конвейера практики |
 | [[docs/reference/PRACTICE_SCHEMA]] | Reference схемы данных и manifest |
 | [[docs/reference/PRACTICE_METRICS]] | Reference метрик базы и consumer outcomes |
+| [[docs/reference/PRACTICE_CATALOG]] | Reference searchable practice catalog |
 | [[docs/architecture/decisions/README]] | Каталог решений (ADR) |
 | [[docs/architecture/decisions/ADR-0001-provenance-required]] | Происхождение обязательно для каждой записи |
 | [[docs/architecture/decisions/ADR-0002-tool-verdicts-tech-radar]] | Вердикты инструментов по tech-radar |

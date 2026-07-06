@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import new_candidate  # noqa: E402
 import practice_report  # noqa: E402
 import practice_metrics  # noqa: E402
+import search_practices  # noqa: E402
 import validate  # noqa: E402
 
 
@@ -206,6 +207,42 @@ candidate: candidates/{filename}
             self.assertEqual(1, metrics["consumer_manifests_found"])
             self.assertEqual({"applied": 1, "deferred": 1}, metrics["consumer_outcomes"])
             self.assertEqual(0.5, metrics["adoption_rate"])
+
+    def test_catalog_filters_by_section_status_tag_and_text(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._write_accepted_pair(root, "common", "000000000001", "fixture")
+            path = root / "practices/common/PC-2026-000000000001-fixture.md"
+            content = path.read_text(encoding="utf-8").replace("tags: fixture", "tags: security, fixture")
+            path.write_text(content, encoding="utf-8")
+            catalog = search_practices.load_catalog(root)
+            found = search_practices.search_catalog(
+                catalog,
+                sections=["common"],
+                statuses=["accepted"],
+                tags=["security"],
+                query="automated fixture",
+            )
+            self.assertEqual(["PC-2026-000000000001"], [item["id"] for item in found])
+
+    def test_catalog_requires_all_requested_tags(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._write_accepted_pair(root, "common", "000000000001", "fixture")
+            catalog = search_practices.load_catalog(root)
+            self.assertEqual([], search_practices.search_catalog(catalog, tags=["fixture", "missing"]))
+
+    def test_markdown_catalog_escapes_table_title(self):
+        item = {
+            "id": "PC-2026-001",
+            "stack": "common",
+            "status": "accepted",
+            "evidence_level": "E2",
+            "title": "A | B]",
+            "path": "practices/common/example.md",
+        }
+        rendered = search_practices.markdown_catalog([item])
+        self.assertIn(r"[A \| B\]]", rendered)
 
     def test_manifest_source_must_match_committed_practice(self):
         with tempfile.TemporaryDirectory() as directory:
