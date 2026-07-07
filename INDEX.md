@@ -37,6 +37,7 @@
 | [[docs/reviews/PHASE_1_FINAL_REVIEW_2026-07-07]] | Финальный review полной ветки P1 trust hardening перед merge |
 | [[docs/reviews/PHASE_3_ROUTING_REVIEW_2026-07-07]] | Review актуального пользовательского knowledge route BP → NPR |
 | [[docs/reviews/A2_CONSUMER_MANIFEST_MIGRATION_REVIEW_2026-07-07]] | Code review fingerprinted consumer manifest migration |
+| [[docs/reviews/A5_BP_CONSUMER_MANIFEST_MIGRATION_REVIEW_2026-07-07]] | Review фактической миграции BP consumer manifest |
 | [[docs/tutorials/FIRST_CONTRIBUTION]] | Tutorial первого вклада |
 | [[docs/how-to/HARVEST_REVIEW_APPLY]] | How-to полного конвейера практики |
 | [[docs/how-to/MIGRATE_CONSUMER_MANIFEST]] | Plan/apply migration consumer manifest schema 1 → 2 |

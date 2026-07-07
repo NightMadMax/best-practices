@@ -18,17 +18,19 @@ related:
 
 ## Open
 
-### NPR writer использует несовместимые поля consumer manifest
-
-- **Обнаружено:** 2026-07-07, свежий аудит NPR ↔ BP
-- **Описание:** NPR onboarding описывает schema 1 top-level `optout` и
-  секционное `applied`, тогда как BP ранее принимала только `practices`.
-- **Текущее состояние:** A1 добавляет backward-compatible read-only
-  normalization `optout` и canonical schema 2, но NPR writer/template/docs ещё
-  должны перейти на schema 2 в фазе A3. Неизвестное `applied` намеренно
-  блокируется до migration review.
+_Нет записей._
 
 ## Fixed
+
+### NPR writer использовал несовместимые поля consumer manifest
+
+- **Обнаружено:** 2026-07-07, свежий аудит NPR ↔ BP
+- **Исправлено:** 2026-07-07, NPR PR №15, merge `5e97b56`; cross-repo gate PR №16,
+  merge `c49a0c8`
+- **Root cause:** NPR onboarding независимо описывал schema 1 top-level
+  `optout` и section `applied`, не исполняя контракт против BP loader.
+- **Исправление:** NPR writer/template/docs используют schema 2 `preferences`,
+  outcomes пишет BP tooling; real-code E2E работает на трёх ОС.
 
 ### CLI migration не запускался после изменения режима по умолчанию
 
