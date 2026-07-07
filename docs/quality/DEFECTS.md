@@ -20,6 +20,24 @@ related:
 
 ## Fixed
 
+### Intake README сохранял удалённый прямой маршрут meta-уроков в NPR
+
+- **Обнаружено:** 2026-07-07, code review фазы наполнения BP
+- **Исправлено:** 2026-07-07, PR №16
+- **Root cause:** routing contract test проверял README проекта и skill, но не
+  активную инструкцию `candidates/README.md`.
+- **Исправление:** intake README направляет meta/process-уроки через BP review;
+  active-surface test теперь включает этот файл.
+
+### Harvest skill не называл точные обязательные поля tools/prompts
+
+- **Обнаружено:** 2026-07-07, validation кандидатов tools/prompts
+- **Исправлено:** 2026-07-07, PR №16
+- **Root cause:** prose описывал смысл полей, а validator проверял точные
+  заголовки, не закреплённые contract test.
+- **Исправление:** skill перечисляет точные заголовки; repository-contract test
+  удерживает синхронизацию.
+
 ### Harvest вышел за явно заданную пару проектов
 
 - **Обнаружено:** 2026-07-07
