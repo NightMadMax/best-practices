@@ -1,14 +1,14 @@
 ---
 id: PC-2026-d94e563cc365
-status: triaged
+status: accepted
 source: "new-project-rules: sequential schema migrations and migration planner tests"
 added_by: "Codex по реализованной фазе NPR schema 2"
 stack: common
 target: practices/common/PC-2026-d94e563cc365-sequential-migration-graph.md
-evidence_level: E1
-evidence: "NPR PR 6/7 and scripts/test-migration-planner.py: deterministic 0→1→2 chain, ambiguity and forged-history regressions"
+evidence_level: E2
+evidence: "NPR PR 6/7; reproducible scripts/test-migration-planner.py covers 0→1→2, missing/ambiguous graph, forged future history and idempotent apply"
 created: 2026-07-07
-decided:
+decided: 2026-07-07
 ---
 
 # Мигрируйте versioned schema только по последовательному графу
@@ -19,4 +19,4 @@ decided:
 
 ## Notes
 
-Harvest сохраняет E1; воспроизводимые adversarial tests оцениваются отдельно при review.
+Review: принято как `accepted/E2` на основании воспроизводимого adversarial test suite.
