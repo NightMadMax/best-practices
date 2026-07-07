@@ -52,6 +52,19 @@ class RepositoryContractTests(unittest.TestCase):
         self.assertIn(relative, skill)
         self.assertTrue((ROOT / relative).is_file())
 
+    def test_active_routing_uses_current_npr_promotion_pipeline(self):
+        active_surfaces = (
+            ROOT / "README.md",
+            ROOT / ".agents/skills/harvest-practice-candidates/SKILL.md",
+        )
+        retired = "harvest" + "-project-lessons"
+        for path in active_surfaces:
+            text = path.read_text(encoding="utf-8")
+            with self.subTest(path=path):
+                self.assertNotIn(retired, text)
+                self.assertIn("promote-project-knowledge", text)
+                self.assertIn("apply-promotion-candidate", text)
+
 
 if __name__ == "__main__":
     unittest.main()
