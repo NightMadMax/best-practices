@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 from datetime import date
 from pathlib import Path
@@ -14,6 +15,7 @@ import validate
 
 
 OUTCOMES = {"applied", "already-compliant", "not-applicable", "deferred"}
+PREFERENCE_VALUES = {"ask", "optout"}
 STACK_SECTIONS = {"1c", "web", "common"}
 CROSS_SECTIONS = {"tools", "anti-patterns", "prompts", "snippets"}
 
@@ -79,13 +81,96 @@ def practice_is_committed(root: Path, practice_path: str) -> bool:
     return unchanged.returncode == 0
 
 
+def empty_manifest() -> Dict[str, object]:
+    return {
+        "schema_version": 2,
+        "preferences": {"global": "ask", "sections": {}},
+        "practices": {},
+    }
+
+
+def _validate_practice_decisions(practices: object, path: Path) -> Dict[str, object]:
+    if not isinstance(practices, dict):
+        raise ValueError(f"manifest practices must be an object: {path}")
+    for practice_id, decision in practices.items():
+        if not isinstance(practice_id, str) or not isinstance(decision, dict):
+            raise ValueError(f"manifest practice decisions must be objects keyed by ID: {path}")
+        outcome = decision.get("outcome")
+        if outcome not in OUTCOMES:
+            raise ValueError(f"unsupported outcome {outcome!r} for {practice_id}: {path}")
+        for field in ("practice_path", "source_commit", "recorded_at", "notes"):
+            if not isinstance(decision.get(field), str):
+                raise ValueError(f"manifest decision {practice_id} requires string {field}: {path}")
+        if not re.fullmatch(r"[0-9a-f]{40}", decision["source_commit"]):
+            raise ValueError(f"manifest decision {practice_id} has invalid source_commit: {path}")
+        try:
+            date.fromisoformat(decision["recorded_at"])
+        except ValueError as exc:
+            raise ValueError(
+                f"manifest decision {practice_id} has invalid recorded_at: {path}"
+            ) from exc
+    return practices
+
+
+def normalize_manifest_data(data: object, path: Path) -> Dict[str, object]:
+    if not isinstance(data, dict):
+        raise ValueError(f"consumer manifest root must be an object: {path}")
+    schema_version = data.get("schema_version")
+    if schema_version == 1:
+        allowed = {"schema_version", "practices", "optout"}
+        unknown = sorted(set(data) - allowed)
+        if unknown:
+            raise ValueError(f"unsupported schema 1 fields {', '.join(unknown)}: {path}")
+        optout = data.get("optout", False)
+        if not isinstance(optout, bool):
+            raise ValueError(f"schema 1 optout must be boolean: {path}")
+        practices = _validate_practice_decisions(data.get("practices", {}), path)
+        return {
+            "schema_version": 2,
+            "preferences": {
+                "global": "optout" if optout else "ask",
+                "sections": {},
+            },
+            "practices": practices,
+        }
+    if schema_version != 2:
+        raise ValueError(f"unsupported manifest schema: {path}")
+    allowed = {"schema_version", "preferences", "practices"}
+    unknown = sorted(set(data) - allowed)
+    if unknown:
+        raise ValueError(f"unsupported schema 2 fields {', '.join(unknown)}: {path}")
+    preferences = data.get("preferences")
+    if not isinstance(preferences, dict):
+        raise ValueError(f"schema 2 preferences must be an object: {path}")
+    if set(preferences) - {"global", "sections"}:
+        raise ValueError(f"schema 2 preferences contain unsupported fields: {path}")
+    global_preference = preferences.get("global")
+    sections = preferences.get("sections")
+    if global_preference not in PREFERENCE_VALUES:
+        raise ValueError(f"unsupported global preference {global_preference!r}: {path}")
+    if not isinstance(sections, dict):
+        raise ValueError(f"schema 2 preference sections must be an object: {path}")
+    for section, preference in sections.items():
+        if section not in validate.ALLOWED_STACKS:
+            raise ValueError(f"unsupported preference section {section!r}: {path}")
+        if preference not in PREFERENCE_VALUES:
+            raise ValueError(f"unsupported preference {preference!r} for {section}: {path}")
+    practices = _validate_practice_decisions(data.get("practices"), path)
+    return {
+        "schema_version": 2,
+        "preferences": {"global": global_preference, "sections": dict(sections)},
+        "practices": practices,
+    }
+
+
 def load_manifest(path: Path) -> Dict[str, object]:
     if not path.exists():
-        return {"schema_version": 1, "practices": {}}
-    data = json.loads(path.read_text(encoding="utf-8"))
-    if data.get("schema_version") != 1 or not isinstance(data.get("practices"), dict):
-        raise ValueError(f"unsupported manifest schema: {path}")
-    return data
+        return empty_manifest()
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"invalid consumer manifest JSON: {path}") from exc
+    return normalize_manifest_data(data, path)
 
 
 def record_outcome(
@@ -98,6 +183,12 @@ def record_outcome(
     if outcome not in OUTCOMES:
         raise ValueError(f"unsupported outcome: {outcome}")
     manifest = load_manifest(manifest_path)
+    if manifest_path.exists():
+        raw = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if raw.get("schema_version") == 1:
+            if raw.get("optout") is True:
+                raise ValueError("schema 1 optout manifest must be migrated before recording")
+            manifest = raw
     practices = manifest["practices"]
     practices[practice["id"]] = {
         "outcome": outcome,
@@ -123,7 +214,10 @@ def markdown_report(
         f"Sections reviewed: {', '.join(f'`{section}`' for section in sorted(sections))}.",
         "",
     ]
+    preferences = manifest["preferences"]
     decisions = manifest.get("practices", {})
+    if preferences["global"] == "optout":
+        return "\n".join(lines + ["Consumer preference: global `optout`; practices are not offered."])
     if not practices:
         return "\n".join(lines + ["Применимых практик выбранной зрелости нет."])
     for practice in practices:
@@ -141,6 +235,20 @@ def markdown_report(
             ]
         )
     return "\n".join(lines).rstrip()
+
+
+def apply_preferences(
+    practices: List[Dict[str, str]], manifest: Dict[str, object]
+) -> List[Dict[str, str]]:
+    preferences = manifest["preferences"]
+    if preferences["global"] == "optout":
+        return []
+    section_preferences = preferences["sections"]
+    return [
+        practice
+        for practice in practices
+        if section_preferences.get(practice["stack"], "ask") != "optout"
+    ]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -175,8 +283,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     explicit = set(args.section or args.stack or []) or None
     stacks = (explicit & STACK_SECTIONS) if explicit else detect_stacks(project)
     sections = select_sections(project, explicit)
-    practices = load_practices(root, sections, include_trial=args.include_trial)
     manifest_path = project / ".best-practices.json"
+    manifest = load_manifest(manifest_path)
+    practices = apply_preferences(
+        load_practices(root, sections, include_trial=args.include_trial), manifest
+    )
     if args.record:
         try:
             practice_id, outcome = args.record.split("=", 1)
@@ -200,6 +311,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     "detected_stacks": sorted(stacks),
                     "stacks": sorted(stacks),
                     "sections": sorted(sections),
+                    "preferences": manifest["preferences"],
                     "practices": practices,
                 },
                 ensure_ascii=False,

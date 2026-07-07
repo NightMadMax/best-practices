@@ -1,12 +1,20 @@
 import re
 import unittest
 from pathlib import Path
+import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+import practice_report  # noqa: E402
 
 
 class RepositoryContractTests(unittest.TestCase):
+    def test_repository_consumer_manifest_matches_current_contract(self):
+        manifest = practice_report.load_manifest(ROOT / ".best-practices.json")
+        self.assertEqual(2, manifest["schema_version"])
+        self.assertEqual("ask", manifest["preferences"]["global"])
+
     def test_workflow_uses_read_only_permissions_and_pinned_actions(self):
         workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
         self.assertIn("permissions:\n  contents: read", workflow)

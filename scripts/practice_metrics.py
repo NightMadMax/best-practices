@@ -36,6 +36,7 @@ def collect_metrics(root: Path, consumers: Iterable[Path], today: Optional[date]
             evidence_levels[fields.get("evidence_level", "unknown")] += 1
 
     consumer_outcomes: Counter[str] = Counter()
+    consumer_preferences: Counter[str] = Counter()
     manifests_found = 0
     consumer_paths = [path.resolve() for path in consumers]
     for consumer in consumer_paths:
@@ -44,6 +45,10 @@ def collect_metrics(root: Path, consumers: Iterable[Path], today: Optional[date]
             continue
         manifests_found += 1
         manifest = practice_report.load_manifest(manifest_path)
+        preferences = manifest["preferences"]
+        consumer_preferences[f"global:{preferences['global']}"] += 1
+        for section, preference in preferences["sections"].items():
+            consumer_preferences[f"section:{section}:{preference}"] += 1
         for decision in manifest["practices"].values():
             if isinstance(decision, dict):
                 consumer_outcomes[str(decision.get("outcome", "unknown"))] += 1
@@ -60,6 +65,7 @@ def collect_metrics(root: Path, consumers: Iterable[Path], today: Optional[date]
         "consumers_scanned": len(consumer_paths),
         "consumer_manifests_found": manifests_found,
         "consumer_outcomes": dict(sorted(consumer_outcomes.items())),
+        "consumer_preferences": dict(sorted(consumer_preferences.items())),
         "recorded_decisions": recorded,
         "adoption_rate": (adopted / recorded) if recorded else None,
     }

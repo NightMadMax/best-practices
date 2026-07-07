@@ -18,6 +18,16 @@ related:
 
 ## Open
 
+### NPR writer использует несовместимые поля consumer manifest
+
+- **Обнаружено:** 2026-07-07, свежий аудит NPR ↔ BP
+- **Описание:** NPR onboarding описывает schema 1 top-level `optout` и
+  секционное `applied`, тогда как BP ранее принимала только `practices`.
+- **Текущее состояние:** A1 добавляет backward-compatible read-only
+  normalization `optout` и canonical schema 2, но NPR writer/template/docs ещё
+  должны перейти на schema 2 в фазе A3. Неизвестное `applied` намеренно
+  блокируется до migration review.
+
 ## Fixed
 
 ### Intake README сохранял удалённый прямой маршрут meta-уроков в NPR
