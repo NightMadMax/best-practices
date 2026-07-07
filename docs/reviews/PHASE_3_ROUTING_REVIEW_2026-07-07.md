@@ -38,11 +38,12 @@ repository contract tests.
 
 ## Verification
 
-- `make check` должен пройти полностью перед merge;
-- `rg` по active surfaces не должен находить retired route;
-- GitHub check `validate` обязателен.
+- `make check`: 42 tests, validation и strict freshness passed;
+- `rg` по active surfaces: retired route не найден;
+- GitHub PR №4 check `validate`: passed;
+- merge commit `b259ae9`: `make check` повторно passed.
 
 ## Verdict
 
-**Approve после успешных тестов и CI.** Исправление устраняет пользовательский
-dead end и закрепляет единственный обратный knowledge flow через BP.
+**Approved и merged.** Исправление устраняет пользовательский dead end и
+закрепляет единственный обратный knowledge flow через BP.

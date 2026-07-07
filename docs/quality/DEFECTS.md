@@ -18,19 +18,18 @@ related:
 
 ## Open
 
-### Документация направляет meta/process-уроки в удалённый NPR skill
+## Fixed
+
+### Документация направляла meta/process-уроки в удалённый NPR skill
 
 - **Обнаружено:** 2026-07-07
-- **Компонент:** `README.md`, `harvest-practice-candidates`
-- **Описание:** пользовательский маршрут всё ещё ссылается на
-  `harvest-project-lessons`, который удалён из `new-project-rules` в рамках
-  двухъярусной архитектуры. Актуальный путь требует сначала принять практику в
-  BP, а затем maintainer-only затвердевать её через
-  `promote-project-knowledge → apply-promotion-candidate`.
+- **Исправлено:** 2026-07-07, PR №4, merge commit `b259ae9`
 - **Root cause:** изменение cross-repository контракта проверялось только в NPR;
-  общего compatibility test для ссылок на skills соседнего репозитория нет.
-
-## Fixed
+  общего compatibility test для активных routing surfaces BP не было.
+- **Исправление:** README и canonical harvest skill используют единый маршрут
+  через BP review, затем maintainer-only
+  `promote-project-knowledge → apply-promotion-candidate`; contract test
+  запрещает retired route в active surfaces.
 
 ### P1 hardening не был интегрирован в `main`
 
