@@ -1,14 +1,14 @@
 ---
 id: PC-2026-850607ffdb29
-status: triaged
+status: accepted
 source: "new-project-rules and Best Practices: executable cross-repository contract"
 added_by: "Codex по реализованной фазе cross-repo contract"
 stack: tools
 target: practices/tools/PC-2026-850607ffdb29-pinned-cross-repo-contract.md
-evidence_level: E1
-evidence: "NPR PR 4/5 plus BP PR 4/5: pinned commit/hash contract detects stale routes, missing skills and ADR drift in CI"
+evidence_level: E2
+evidence: "NPR PR 4/5 plus BP PR 4/5; reproducible contract tests detect stale routes, missing skills, wrong hashes and ADR drift"
 created: 2026-07-07
-decided:
+decided: 2026-07-07
 ---
 
 # Проверяйте межрепозиторные зависимости закреплённым контрактом
@@ -19,4 +19,4 @@ decided:
 
 ## Notes
 
-Контракт не заменяет API compatibility или package manager lockfile. Harvest оставляет E1; автоматические negative tests будут оценены review-этапом.
+Контракт не заменяет API compatibility или package manager lockfile. Review: принято как `accepted/E2` по двум repositories и воспроизводимым negative tests.
