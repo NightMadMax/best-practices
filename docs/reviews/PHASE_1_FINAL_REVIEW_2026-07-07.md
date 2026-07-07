@@ -42,11 +42,10 @@ route остаётся документированным ограничение
 - repository validation: passed;
 - strict freshness: passed;
 - `git diff --check`: passed;
-- GitHub PR №2 check `validate`: passed до добавления этого review artifact;
-  итоговый check должен быть повторён после push.
+- GitHub PR №2 check `validate`: passed после добавления review artifact;
+- merge commit `712e51d`: `make check` повторно passed.
 
 ## Verdict
 
-**Approve для merge после повторного успешного CI.** Реализация удерживает
-заявленные trust/lifecycle invariants и не ломает legacy ID или default
-consumer delivery semantics.
+**Approved и merged.** Реализация удерживает заявленные trust/lifecycle
+invariants и не ломает legacy ID или default consumer delivery semantics.
