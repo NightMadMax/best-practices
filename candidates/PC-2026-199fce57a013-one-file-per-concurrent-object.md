@@ -1,6 +1,6 @@
 ---
 id: PC-2026-199fce57a013
-status: triaged
+status: accepted
 source: "Best Practices: docs/quality/DEFECTS.md, общий staging кандидатов"
 added_by: "Codex по подтверждённому дефекту BP"
 stack: common
@@ -8,7 +8,7 @@ target: practices/common/PC-2026-199fce57a013-one-file-per-concurrent-object.md
 evidence_level: E1
 evidence: "BP defect: общая таблица кандидатов вызывала merge conflicts; исправлено переходом на file-per-object"
 created: 2026-07-07
-decided:
+decided: 2026-07-07
 ---
 
 # Храните независимо изменяемые объекты в отдельных файлах
@@ -19,4 +19,5 @@ decided:
 
 ## Notes
 
-На harvest-этапе evidence ограничен BP. Воспроизводимые repository tests будут отдельно оценены review-этапом.
+Review: принято как `trial/E1`; независимого второго проекта или
+воспроизводимого concurrency test пока нет.
