@@ -2,7 +2,7 @@
 type: defect-log
 status: active
 owner: project
-last_verified: 2026-07-06
+last_verified: 2026-07-07
 source_of_truth: repository
 related:
   - "[[docs/README]]"
@@ -18,7 +18,28 @@ related:
 
 ## Open
 
-_Нет открытых дефектов._
+### Документация направляет meta/process-уроки в удалённый NPR skill
+
+- **Обнаружено:** 2026-07-07
+- **Компонент:** `README.md`, `harvest-practice-candidates`
+- **Описание:** пользовательский маршрут всё ещё ссылается на
+  `harvest-project-lessons`, который удалён из `new-project-rules` в рамках
+  двухъярусной архитектуры. Актуальный путь требует сначала принять практику в
+  BP, а затем maintainer-only затвердевать её через
+  `promote-project-knowledge → apply-promotion-candidate`.
+- **Root cause:** изменение cross-repository контракта проверялось только в NPR;
+  общего compatibility test для ссылок на skills соседнего репозитория нет.
+
+### P1 hardening не интегрирован в `main`
+
+- **Обнаружено:** 2026-07-07
+- **Компонент:** GitHub delivery
+- **Описание:** ветка `codex/p1-trust-hardening` на 12 коммитов опережает
+  `origin/main`, но открытого PR нет. Поэтому validator hardening, lifecycle
+  invariants, metrics и catalog проходят локальные проверки, но недоступны
+  потребителям, которые клонируют или обновляют `main`.
+- **Root cause:** реализация и локальные review завершены без финального PR/merge
+  gate, поэтому checked branch и опубликованный продукт разошлись.
 
 ## Fixed
 
