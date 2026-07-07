@@ -99,6 +99,8 @@ Loader без записи нормализует canonical schema 1 (`practices
 schema 1 (`optout=true`) в schema 2. Неизвестные поля schema 1, включая
 секционное `applied`, блокируются до manual migration review. Запись нового
 outcome не выполняет неявную миграцию существующего canonical schema 1.
+Фактическая миграция выполняется только через fingerprinted workflow
+[[docs/how-to/MIGRATE_CONSUMER_MANIFEST]].
 
 ## Applicability report
 

@@ -36,8 +36,10 @@
 | [[docs/reviews/PRACTICE_CATALOG_REVIEW_2026-07-06]] | Review searchable practice catalog |
 | [[docs/reviews/PHASE_1_FINAL_REVIEW_2026-07-07]] | Финальный review полной ветки P1 trust hardening перед merge |
 | [[docs/reviews/PHASE_3_ROUTING_REVIEW_2026-07-07]] | Review актуального пользовательского knowledge route BP → NPR |
+| [[docs/reviews/A2_CONSUMER_MANIFEST_MIGRATION_REVIEW_2026-07-07]] | Code review fingerprinted consumer manifest migration |
 | [[docs/tutorials/FIRST_CONTRIBUTION]] | Tutorial первого вклада |
 | [[docs/how-to/HARVEST_REVIEW_APPLY]] | How-to полного конвейера практики |
+| [[docs/how-to/MIGRATE_CONSUMER_MANIFEST]] | Plan/apply migration consumer manifest schema 1 → 2 |
 | [[docs/reference/PRACTICE_SCHEMA]] | Reference схемы данных и manifest |
 | [[docs/reference/PRACTICE_METRICS]] | Reference метрик базы и consumer outcomes |
 | [[docs/reference/PRACTICE_CATALOG]] | Reference searchable practice catalog |
@@ -56,6 +58,7 @@
 | `.agents/skills/harvest-practice-candidates/` | Импорт уроков из соседних проектов в `candidates/` |
 | `.agents/skills/review-practice-candidates/` | Оценка и принятие кандидатов в `practices/` |
 | `.agents/skills/apply-best-practices/` | Pull-доставка практик в целевой проект |
+| `scripts/migrate_consumer_manifest.py` | Fingerprinted migration consumer manifest schema 1 → 2 |
 
 Указатели для Claude Code — в `.claude/skills/<name>/SKILL.md`; канон — в
 `.agents/skills/<name>/SKILL.md`.
