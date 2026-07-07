@@ -1,6 +1,6 @@
 ---
 id: PC-2026-a8796542ad3c
-status: triaged
+status: accepted
 source: "new-project-rules phase 4 review and Best Practices routing defect"
 added_by: "Codex с учётом подтверждённого пользователем PLAYBOOK-паттерна"
 stack: prompts
@@ -8,7 +8,7 @@ target: practices/prompts/PC-2026-a8796542ad3c-audit-after-structural-change.md
 evidence_level: E1
 evidence: "NPR phase 4 found cross-repo drift; BP PR 4/5 removed stale route and added contract regression"
 created: 2026-07-07
-decided:
+decided: 2026-07-07
 ---
 
 # После структурного изменения запускайте широкий read-only аудит
@@ -19,4 +19,4 @@ decided:
 
 ## Notes
 
-Практика учитывает текущий проектный PLAYBOOK, но evidence относится к одной связанной NPR/BP программе, поэтому остаётся E1.
+Review: принято как `trial/E1`; evidence относится к одной связанной NPR/BP программе.
