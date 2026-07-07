@@ -55,6 +55,7 @@ class RepositoryContractTests(unittest.TestCase):
     def test_active_routing_uses_current_npr_promotion_pipeline(self):
         active_surfaces = (
             ROOT / "README.md",
+            ROOT / "candidates/README.md",
             ROOT / ".agents/skills/harvest-practice-candidates/SKILL.md",
         )
         retired = "harvest" + "-project-lessons"
@@ -64,6 +65,21 @@ class RepositoryContractTests(unittest.TestCase):
                 self.assertNotIn(retired, text)
                 self.assertIn("promote-project-knowledge", text)
                 self.assertIn("apply-promotion-candidate", text)
+
+    def test_harvest_skill_names_validator_body_fields(self):
+        skill = (ROOT / ".agents/skills/harvest-practice-candidates/SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        for field in (
+            "Назначение",
+            "Вердикт",
+            "Настройка",
+            "Когда применять",
+            "Промпт / паттерн",
+            "Почему работает",
+        ):
+            with self.subTest(field=field):
+                self.assertIn(f"`{field}`", skill)
 
 
 if __name__ == "__main__":
