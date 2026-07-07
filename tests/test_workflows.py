@@ -182,6 +182,8 @@ candidate: candidates/{filename}
                 "verified by test",
             )
             data = json.loads(manifest.read_text(encoding="utf-8"))
+            self.assertEqual(2, data["schema_version"])
+            self.assertEqual({"global": "ask", "sections": {}}, data["preferences"])
             record = data["practices"]["PC-2026-001"]
             self.assertEqual("applied", record["outcome"])
             self.assertEqual("a" * 40, record["source_commit"])
@@ -196,8 +198,20 @@ candidate: candidates/{filename}
             manifest = {
                 "schema_version": 1,
                 "practices": {
-                    "PC-2026-000000000001": {"outcome": "applied"},
-                    "PC-2026-other": {"outcome": "deferred"},
+                    "PC-2026-000000000001": {
+                        "outcome": "applied",
+                        "practice_path": "practices/common/PC-2026-000000000001-fixture.md",
+                        "source_commit": "a" * 40,
+                        "recorded_at": "2026-07-06",
+                        "notes": "fixture",
+                    },
+                    "PC-2026-other": {
+                        "outcome": "deferred",
+                        "practice_path": "practices/common/PC-2026-other.md",
+                        "source_commit": "b" * 40,
+                        "recorded_at": "2026-07-06",
+                        "notes": "fixture",
+                    },
                 },
             }
             (consumer / ".best-practices.json").write_text(
@@ -206,7 +220,109 @@ candidate: candidates/{filename}
             metrics = practice_metrics.collect_metrics(root, [consumer], today=practice_metrics.date(2026, 7, 6))
             self.assertEqual(1, metrics["consumer_manifests_found"])
             self.assertEqual({"applied": 1, "deferred": 1}, metrics["consumer_outcomes"])
+            self.assertEqual({"global:ask": 1}, metrics["consumer_preferences"])
             self.assertEqual(0.5, metrics["adoption_rate"])
+
+    def test_missing_manifest_defaults_to_schema2(self):
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = practice_report.load_manifest(Path(directory) / ".best-practices.json")
+            self.assertEqual(2, manifest["schema_version"])
+            self.assertEqual({"global": "ask", "sections": {}}, manifest["preferences"])
+            self.assertEqual({}, manifest["practices"])
+
+    def test_schema1_manifest_is_normalized_without_mutation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / ".best-practices.json"
+            original = '{"schema_version": 1, "practices": {}}\n'
+            path.write_text(original, encoding="utf-8")
+            manifest = practice_report.load_manifest(path)
+            self.assertEqual(2, manifest["schema_version"])
+            self.assertEqual("ask", manifest["preferences"]["global"])
+            self.assertEqual(original, path.read_text(encoding="utf-8"))
+
+    def test_schema1_global_optout_is_normalized(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / ".best-practices.json"
+            path.write_text('{"schema_version": 1, "optout": true}\n', encoding="utf-8")
+            manifest = practice_report.load_manifest(path)
+            self.assertEqual("optout", manifest["preferences"]["global"])
+            self.assertEqual([], practice_report.apply_preferences([{"stack": "common"}], manifest))
+
+    def test_schema2_section_optout_filters_only_that_section(self):
+        manifest = {
+            "schema_version": 2,
+            "preferences": {"global": "ask", "sections": {"web": "optout"}},
+            "practices": {},
+        }
+        normalized = practice_report.normalize_manifest_data(manifest, Path("manifest.json"))
+        practices = [{"stack": "common"}, {"stack": "web"}, {"stack": "tools"}]
+        self.assertEqual(
+            [{"stack": "common"}, {"stack": "tools"}],
+            practice_report.apply_preferences(practices, normalized),
+        )
+
+    def test_cli_respects_schema2_global_optout(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "base"
+            project = Path(directory) / "consumer"
+            root.mkdir()
+            project.mkdir()
+            self._write_accepted_pair(root, "common", "000000000001", "fixture")
+            (project / ".best-practices.json").write_text(
+                json.dumps({
+                    "schema_version": 2,
+                    "preferences": {"global": "optout", "sections": {}},
+                    "practices": {},
+                }),
+                encoding="utf-8",
+            )
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts/practice_report.py"),
+                    "--root", str(root),
+                    "--project", str(project),
+                    "--format", "json",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            report = json.loads(result.stdout)
+            self.assertEqual("optout", report["preferences"]["global"])
+            self.assertEqual([], report["practices"])
+
+    def test_unknown_applied_field_requires_future_migration_review(self):
+        with self.assertRaisesRegex(ValueError, "unsupported schema 1 fields applied"):
+            practice_report.normalize_manifest_data(
+                {"schema_version": 1, "applied": ["common"]}, Path("manifest.json")
+            )
+
+    def test_record_preserves_canonical_schema1_until_migration(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / ".best-practices.json"
+            path.write_text('{"schema_version": 1, "practices": {}}\n', encoding="utf-8")
+            practice_report.record_outcome(
+                path,
+                {"id": "PC-2026-001", "path": "practices/common/example.md"},
+                "applied",
+                "a" * 40,
+                "fixture",
+            )
+            self.assertEqual(1, json.loads(path.read_text(encoding="utf-8"))["schema_version"])
+
+    def test_record_rejects_schema1_global_optout_without_implicit_migration(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / ".best-practices.json"
+            path.write_text('{"schema_version": 1, "optout": true}\n', encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "must be migrated"):
+                practice_report.record_outcome(
+                    path,
+                    {"id": "PC-2026-001", "path": "practices/common/example.md"},
+                    "applied",
+                    "a" * 40,
+                    "fixture",
+                )
 
     def test_catalog_filters_by_section_status_tag_and_text(self):
         with tempfile.TemporaryDirectory() as directory:

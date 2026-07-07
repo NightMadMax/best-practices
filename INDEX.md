@@ -47,6 +47,7 @@
 | [[docs/architecture/decisions/ADR-0003-one-practice-per-file]] | Одна практика — один файл, lifecycle и evidence levels |
 | [[docs/architecture/decisions/ADR-0004-collision-resistant-candidate-ids]] | Collision-resistant candidate ID без общего счётчика |
 | [[docs/architecture/decisions/ADR-0005-practice-lifecycle-invariants]] | Lifecycle, chronology и replacement invariants практик |
+| [[docs/architecture/decisions/ADR-0006-versioned-consumer-manifest]] | Versioned consumer preferences и per-practice outcomes |
 
 ## Скилы конвейера
 

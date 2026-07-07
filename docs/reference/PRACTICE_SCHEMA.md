@@ -2,12 +2,13 @@
 type: reference
 status: active
 owner: project
-last_verified: 2026-07-05
-source_of_truth: scripts/validate.py
+last_verified: 2026-07-07
+source_of_truth: scripts/practice_report.py
 related:
   - "[[candidates/README]]"
   - "[[practices/README]]"
   - "[[docs/architecture/decisions/ADR-0003-one-practice-per-file]]"
+  - "[[docs/architecture/decisions/ADR-0006-versioned-consumer-manifest]]"
 ---
 
 # Схема кандидатов, практик и consumer manifest
@@ -70,10 +71,34 @@ Validator проверяет secret patterns во всех tracked и новых
 
 ## `.best-practices.json`
 
-Manifest создаётся в корне проекта-потребителя только явным `--record` и имеет
-`schema_version: 1`. В `practices` ключом служит стабильный ID, а запись хранит
-outcome, путь source practice, commit базы, дату и notes. Manifest фиксирует
-решение потребителя, но не копирует содержание практики.
+Текущий contract — schema 2:
+
+```json
+{
+  "schema_version": 2,
+  "preferences": {
+    "global": "ask",
+    "sections": {
+      "web": "optout"
+    }
+  },
+  "practices": {}
+}
+```
+
+`preferences.global` и секционные значения принимают `ask` или `optout`.
+Состояния `applied` на уровне раздела нет: применение хранится только для
+отдельных practice ID, поэтому новые практики не скрываются старым решением о
+разделе.
+
+В `practices` ключом служит стабильный ID, а запись хранит `outcome`, путь
+source practice, 40-hex commit базы, ISO-дату и notes. Допустимые outcomes:
+`applied`, `already-compliant`, `not-applicable`, `deferred`.
+
+Loader без записи нормализует canonical schema 1 (`practices`) и legacy NPR
+schema 1 (`optout=true`) в schema 2. Неизвестные поля schema 1, включая
+секционное `applied`, блокируются до manual migration review. Запись нового
+outcome не выполняет неявную миграцию существующего canonical schema 1.
 
 ## Applicability report
 

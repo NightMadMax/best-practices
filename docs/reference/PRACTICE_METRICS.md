@@ -2,7 +2,7 @@
 type: reference
 status: active
 owner: project
-last_verified: 2026-07-06
+last_verified: 2026-07-07
 source_of_truth: scripts/practice_metrics.py
 related:
   - "[[docs/reference/PRACTICE_SCHEMA]]"
@@ -29,6 +29,8 @@ python3 scripts/practice_metrics.py \
 - `stale_practices` — просроченные `review_by`;
 - `consumers_scanned`, `consumer_manifests_found` — покрытие потребителей;
 - `consumer_outcomes`, `recorded_decisions` — реальные записанные решения;
+- `consumer_preferences` — число global/section `ask` и `optout` после
+  нормализации schema 1/2;
 - `adoption_rate` — доля `applied` + `already-compliant` среди записанных
   решений; `null`, если решений нет.
 
