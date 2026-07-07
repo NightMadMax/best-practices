@@ -1,10 +1,10 @@
 ---
-id: PC-2026-000
+id: PC-2026-a1b2c3d4e5f6
 status: new
 source: "<Проект>: <артефакт, напр. docs/quality/DEFECTS.md #12>"
 added_by: "<пользователь / автор / агент>"
 stack: common
-target: practices/common/PC-2026-000-example.md
+target: practices/common/PC-2026-a1b2c3d4e5f6-example.md
 evidence_level: E0
 evidence: "<commit / PR / defect / тест>"
 created: 2026-01-01

@@ -14,6 +14,8 @@ import validate
 
 
 OUTCOMES = {"applied", "already-compliant", "not-applicable", "deferred"}
+STACK_SECTIONS = {"1c", "web", "common"}
+CROSS_SECTIONS = {"tools", "anti-patterns", "prompts", "snippets"}
 
 
 def detect_stacks(project: Path) -> Set[str]:
@@ -25,10 +27,16 @@ def detect_stacks(project: Path) -> Set[str]:
     return stacks
 
 
-def load_practices(root: Path, stacks: Iterable[str], include_trial: bool = False) -> List[Dict[str, str]]:
+def select_sections(project: Path, explicit: Optional[Iterable[str]] = None) -> Set[str]:
+    """Select stack sections plus cross-cutting sections that require review."""
+    stacks = set(explicit) if explicit is not None else detect_stacks(project)
+    return stacks | {"common"} | CROSS_SECTIONS
+
+
+def load_practices(root: Path, sections: Iterable[str], include_trial: bool = False) -> List[Dict[str, str]]:
     allowed_statuses = {"accepted", "trial"} if include_trial else {"accepted"}
     practices: List[Dict[str, str]] = []
-    for stack in sorted(set(stacks) | {"common"}):
+    for stack in sorted(set(sections) | {"common"}):
         for path in sorted((root / "practices" / stack).glob("PC-*.md")):
             fields, body, problems = validate.parse_frontmatter(path)
             if problems or fields.get("status") not in allowed_statuses:
@@ -106,8 +114,15 @@ def record_outcome(
     temporary_path.replace(manifest_path)
 
 
-def markdown_report(practices: List[Dict[str, str]], manifest: Dict[str, object]) -> str:
-    lines = ["# Best Practices applicability report", ""]
+def markdown_report(
+    practices: List[Dict[str, str]], manifest: Dict[str, object], sections: Iterable[str]
+) -> str:
+    lines = [
+        "# Best Practices applicability report",
+        "",
+        f"Sections reviewed: {', '.join(f'`{section}`' for section in sorted(sections))}.",
+        "",
+    ]
     decisions = manifest.get("practices", {})
     if not practices:
         return "\n".join(lines + ["Применимых практик выбранной зрелости нет."])
@@ -118,6 +133,7 @@ def markdown_report(practices: List[Dict[str, str]], manifest: Dict[str, object]
                 f"## {practice['id']}: {practice['title']}",
                 "",
                 f"- Status: `{practice['status']}`; evidence: `{practice['evidence_level']}`.",
+                f"- Section: `{practice['stack']}`.",
                 f"- Applies to: {practice['applies_to']}",
                 f"- Source: `{practice['path']}`; {practice['source']}.",
                 f"- Consumer outcome: `{previous}`.",
@@ -132,6 +148,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--project", required=True, type=Path)
     parser.add_argument("--stack", action="append", choices=sorted(validate.ALLOWED_STACKS))
+    parser.add_argument(
+        "--section",
+        action="append",
+        choices=sorted(validate.ALLOWED_STACKS),
+        help="explicit stack section; cross-cutting sections are still included",
+    )
     parser.add_argument("--include-trial", action="store_true")
     parser.add_argument("--format", choices=("markdown", "json"), default="markdown")
     parser.add_argument("--record", metavar="ID=OUTCOME")
@@ -150,8 +172,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         for problem in problems:
             print(problem.render(root))
         raise SystemExit("Best Practices repository validation failed")
-    stacks = set(args.stack) if args.stack else detect_stacks(project)
-    practices = load_practices(root, stacks, include_trial=args.include_trial)
+    explicit = set(args.section or args.stack or []) or None
+    stacks = (explicit & STACK_SECTIONS) if explicit else detect_stacks(project)
+    sections = select_sections(project, explicit)
+    practices = load_practices(root, sections, include_trial=args.include_trial)
     manifest_path = project / ".best-practices.json"
     if args.record:
         try:
@@ -170,9 +194,20 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         record_outcome(manifest_path, selected, outcome, current_commit(root), args.notes)
     manifest = load_manifest(manifest_path)
     if args.format == "json":
-        print(json.dumps({"stacks": sorted(stacks), "practices": practices}, ensure_ascii=False, indent=2))
+        print(
+            json.dumps(
+                {
+                    "detected_stacks": sorted(stacks),
+                    "stacks": sorted(stacks),
+                    "sections": sorted(sections),
+                    "practices": practices,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
     else:
-        print(markdown_report(practices, manifest))
+        print(markdown_report(practices, manifest, sections))
     return 0
 
 

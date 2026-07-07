@@ -17,16 +17,25 @@
 
 ## Commands
 
-Add only commands verified in this repository. When setting the project up,
-inspect its manifests and configuration to fill in the real install, build,
-test, lint, and run commands. Delete this section if the project has none.
+- `make check` — полный локальный gate: tests, schema/link validation и strict
+  freshness checks. Запускай перед завершением любой repository change.
+- `make test` — только unit и workflow tests через `unittest`.
+- `make validate` — schema, lifecycle, secrets и Markdown/wikilink validation.
+- `make freshness` — strict-проверка просроченных практик.
+- `make metrics` — сводные maturity/freshness metrics.
+- `make catalog` — локальный поиск по каталогу практик.
 
 ## Done when
 
-State the project's definition of done so the agent can self-verify before
-reporting completion: which checks must pass (tests, lint, build), what counts
-as a verified change, and any required review or approval. List concrete,
-checkable conditions. Delete this section until the project has real criteria.
+- `make check` проходит полностью.
+- Изменение проверено по `git diff`; в commit не попали secrets, generated
+  noise или несвязанные пользовательские изменения.
+- Новые или перемещённые Markdown-артефакты связаны wikilinks, а `INDEX.md` и
+  `docs/README.md` обновлены, если изменилась навигация.
+- Обнаруженные дефекты записаны в `docs/quality/DEFECTS.md`; исправленные
+  перенесены в `Fixed` с датой, commit и root cause.
+- Изменение закоммичено и отправлено в текущую remote branch. PR, release и
+  иные remote actions выполнены только после отдельного согласования.
 
 ## Markdown Workflow
 

@@ -29,6 +29,10 @@ Harvest меняет только `candidates/`, никогда `practices/`.
 4. `E1` создаёт `trial`; `E2`/`E3` — `accepted`.
 5. Обнови индекс стека, статус/дату кандидата и запусти `make check`.
 
+Для последующих lifecycle-изменений соблюдай ADR-0005: хронология
+`created <= last_verified < review_by`, terminal `superseded` с существующим
+`superseded_by`, только разрешённые переходы статусов.
+
 ## Apply
 
 Сначала сформируй read-only отчёт:
@@ -40,6 +44,11 @@ python3 scripts/practice_report.py --project /path/to/consumer
 Trial-практики скрыты по умолчанию. Для осознанной оценки добавь
 `--include-trial`. После проверки diff и фактического применения явно запиши
 результат:
+
+Default report включает обнаруженные stack-секции, `common` и все
+cross-cutting sections (`tools`, `anti-patterns`, `prompts`, `snippets`), чтобы
+принятая практика не была молча пропущена. Для неоднозначного multi-stack
+проекта укажи повторяемый `--section`, например `--section 1c --section web`.
 
 ```sh
 python3 scripts/practice_report.py \

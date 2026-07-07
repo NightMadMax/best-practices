@@ -2,7 +2,7 @@
 type: defect-log
 status: active
 owner: project
-last_verified: 2026-07-05
+last_verified: 2026-07-07
 source_of_truth: repository
 related:
   - "[[docs/README]]"
@@ -18,31 +18,100 @@ related:
 
 ## Open
 
-### `AGENTS.md` содержит незаполненные шаблонные Commands и Done when
+### Документация направляет meta/process-уроки в удалённый NPR skill
+
+- **Обнаружено:** 2026-07-07
+- **Компонент:** `README.md`, `harvest-practice-candidates`
+- **Описание:** пользовательский маршрут всё ещё ссылается на
+  `harvest-project-lessons`, который удалён из `new-project-rules` в рамках
+  двухъярусной архитектуры. Актуальный путь требует сначала принять практику в
+  BP, а затем maintainer-only затвердевать её через
+  `promote-project-knowledge → apply-promotion-candidate`.
+- **Root cause:** изменение cross-repository контракта проверялось только в NPR;
+  общего compatibility test для ссылок на skills соседнего репозитория нет.
+
+### P1 hardening не интегрирован в `main`
+
+- **Обнаружено:** 2026-07-07
+- **Компонент:** GitHub delivery
+- **Описание:** ветка `codex/p1-trust-hardening` на 12 коммитов опережает
+  `origin/main`, но открытого PR нет. Поэтому validator hardening, lifecycle
+  invariants, metrics и catalog проходят локальные проверки, но недоступны
+  потребителям, которые клонируют или обновляют `main`.
+- **Root cause:** реализация и локальные review завершены без финального PR/merge
+  gate, поэтому checked branch и опубликованный продукт разошлись.
+
+## Fixed
+
+### `AGENTS.md` содержал незаполненные шаблонные Commands и Done when
 
 - **Обнаружено:** 2026-07-05
-- **Описание:** локальные `make check`, `make test`, `make validate` уже
-  реализованы, но активный `AGENTS.md` всё ещё содержит bootstrap-подсказки
-  вместо реальных команд и критериев готовности. Это ухудшает onboarding и не
-  даёт агенту однозначного definition of done.
-- **Требуемое решение:** в отдельной следующей сессии заменить два шаблонных
-  раздела фактическими командами и критериями. В текущей сессии файл не менялся,
-  потому что собственное правило проекта запрещает редактировать `AGENTS.md`
-  или `CLAUDE.md` после загрузки инструкций.
+- **Исправлено:** 2026-07-06, commit `70e4318`
+- **Root cause:** bootstrap-шаблон не был заменён фактическими командами и
+  критериями после появления рабочего `Makefile` и CI gate.
+- **Исправление:** раздел `Commands` теперь документирует проверенные targets
+  `make`; `Done when` требует успешный `make check`, проверку diff, актуальные
+  навигацию и defect log, а также commit и push с учётом remote-approval rules.
+
+### Default consumer report пропускал кросс-разделы практик
+
+- **Обнаружено:** 2026-07-06
+- **Исправлено:** 2026-07-06, commit `08b3e8a`
+- **Root cause:** CLI моделировал только language stacks, хотя knowledge model
+  также содержит cross-cutting категории.
+- **Исправление:** default report включает `common`, detected stacks и четыре
+  cross-sections; добавлены явный `--section`, совместимые JSON fields и
+  end-to-end CLI fixture со всеми семью разделами.
+
+### Secret-проверка не охватывала репозиторий целиком
+
+- **Обнаружено:** 2026-07-06
+- **Исправлено:** 2026-07-06, commit `7e32615`
+- **Root cause:** secret patterns вызывались как часть schema-validation только
+  для candidate/practice, хотя policy распространялась на весь репозиторий.
+- **Исправление:** добавлен scan tracked и новых non-ignored текстовых файлов,
+  явный reviewed suppression marker и негативные тесты вне `candidates/`.
+
+### Последовательные ID кандидатов конфликтовали между параллельными PR
+
+- **Обнаружено:** 2026-07-06
+- **Исправлено:** 2026-07-06, commit `7e32615`
+- **Root cause:** локальный `max + 1` ошибочно использовался как глобальный
+  allocator в распределённом Git workflow.
+- **Исправление:** новые ID используют 48-битный random suffix; legacy ID
+  сохранены, локальные совпадения повторно генерируются, решение закреплено в
+  [[docs/architecture/decisions/ADR-0004-collision-resistant-candidate-ids]].
+
+### Validator не связывал evidence кандидата и принятой практики
+
+- **Обнаружено:** 2026-07-06
+- **Исправлено:** 2026-07-06, commit `7e32615`
+- **Root cause:** pair-validation проверял identity/provenance, но пропускал
+  поля, определяющие зрелость решения.
+- **Исправление:** `evidence` и `evidence_level` обязаны совпадать; отдельные
+  negative tests блокируют подмену evidence и одностороннее повышение уровня.
+
+### Skill `harvest-practice-candidates` ссылался на несуществующий ADR
+
+- **Обнаружено:** 2026-07-06
+- **Исправлено:** 2026-07-06, commit `7e32615`
+- **Root cause:** ADR был переименован без синхронного обновления обязательного
+  пути в skill и без contract test.
+- **Исправление:** путь исправлен на фактический ADR, наличие обязательного файла
+  проверяется repository-contract test.
 
 ### Защита `main` описана, но не включена на GitHub
 
 - **Обнаружено:** 2026-07-05
-- **Описание:** `CONTRIBUTING.md` утверждает, что `main` защищён и изменения
-  принимаются только через pull request. Проверка
-  `GET /repos/NightMadMax/best-practices/branches/main/protection` вернула
-  `404 Branch not protected`. Поэтому заявленная модель ревью фактически не
-  обеспечивается: прямой push и слияние без обязательных проверок не исключены.
-- **Требуемое решение:** после согласования владельца включить ruleset или
-  branch protection с обязательным PR, review и status checks; затем повторно
-  проверить через GitHub API. Удалённые настройки без согласования не менялись.
-
-## Fixed
+- **Исправлено:** 2026-07-06, GitHub repository ruleset `Protect main`
+  (`id: 18538769`; external configuration, без repository commit)
+- **Описание:** первоначально `CONTRIBUTING.md` описывал защиту, которой не было.
+  На 2026-07-06 активный ruleset для default branch требует pull request,
+  один approval, Code Owner review, разрешение review threads и status check
+  `validate`, а также запрещает deletion и non-fast-forward updates.
+- **Root cause:** governance был задокументирован до применения серверной
+  настройки; проверка только legacy branch-protection endpoint недостаточна,
+  потому что repository rulesets проверяются отдельным API.
 
 ### Одиночная таблица кандидатов давала merge-конфликты при командном приёме
 

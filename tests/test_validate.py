@@ -47,6 +47,7 @@ created: 2026-07-05
 last_verified: 2026-07-05
 review_by: 2026-10-05
 supersedes:
+superseded_by:
 conflicts_with:
 candidate: candidates/PC-2026-001-check-input.md
 ---
@@ -78,6 +79,13 @@ class CandidateValidationTests(unittest.TestCase):
         with RepositoryFixture() as root:
             path = root / "candidates/PC-2026-001-check-input.md"
             path.write_text(VALID_CANDIDATE, encoding="utf-8")
+            self.assertEqual([], validate.validate_repository(root, check_links=False))
+
+    def test_collision_resistant_candidate_id_passes(self):
+        with RepositoryFixture() as root:
+            content = VALID_CANDIDATE.replace("PC-2026-001", "PC-2026-a1b2c3d4e5f6")
+            path = root / "candidates/PC-2026-a1b2c3d4e5f6-check-input.md"
+            path.write_text(content, encoding="utf-8")
             self.assertEqual([], validate.validate_repository(root, check_links=False))
 
     def test_id_must_match_filename(self):
@@ -128,11 +136,28 @@ class CandidateValidationTests(unittest.TestCase):
     def test_secret_and_machine_path_are_rejected(self):
         with RepositoryFixture() as root:
             path = root / "candidates/PC-2026-001-check-input.md"
-            content = VALID_CANDIDATE + "\nToken: ghp_abcdefghijklmnopqrstuvwxyz123456\n/Users/alice/project\n"
+            token = "ghp_" + "abcdefghijklmnopqrstuvwxyz123456"
+            local_path = "/" + "Users/alice/project"
+            content = VALID_CANDIDATE + f"\nToken: {token}\n{local_path}\n"
             path.write_text(content, encoding="utf-8")
             messages = [p.message for p in validate.validate_repository(root, check_links=False)]
             self.assertTrue(any("GitHub token" in message for message in messages))
             self.assertTrue(any("machine-specific path" in message for message in messages))
+
+    def test_secret_outside_candidate_is_rejected(self):
+        with RepositoryFixture() as root:
+            token = "ghp_" + "abcdefghijklmnopqrstuvwxyz123456"
+            (root / "README.md").write_text(f"Token: {token}\n", encoding="utf-8")
+            messages = [p.message for p in validate.validate_repository(root, check_links=False)]
+            self.assertTrue(any("GitHub token" in message for message in messages))
+
+    def test_secret_scan_allows_explicit_fixture_line(self):
+        with RepositoryFixture() as root:
+            token = "ghp_" + "abcdefghijklmnopqrstuvwxyz123456"
+            (root / "fixture.txt").write_text(
+                f"Token: {token}  # secret-scan: allow\n", encoding="utf-8"
+            )
+            self.assertEqual([], validate.validate_repository(root, check_links=False))
 
     def test_broken_wikilink_is_rejected(self):
         with RepositoryFixture() as root:
@@ -169,6 +194,30 @@ class CandidateValidationTests(unittest.TestCase):
             messages = [p.message for p in validate.validate_repository(root, check_links=False)]
             self.assertTrue(any("requires evidence_level E2" in message for message in messages))
 
+    def test_practice_evidence_must_match_accepted_candidate(self):
+        with RepositoryFixture() as root:
+            candidate = root / "candidates/PC-2026-001-check-input.md"
+            accepted = VALID_CANDIDATE.replace("status: triaged", "status: accepted")
+            accepted = accepted.replace("decided:\n", "decided: 2026-07-05\n")
+            candidate.write_text(accepted, encoding="utf-8")
+            practice = root / "practices/common/PC-2026-001-check-input.md"
+            changed = VALID_PRACTICE.replace('evidence: "test-case"', 'evidence: "unreviewed"')
+            practice.write_text(changed, encoding="utf-8")
+            messages = [p.message for p in validate.validate_repository(root, check_links=False)]
+            self.assertTrue(any("field 'evidence' differs" in message for message in messages))
+
+    def test_practice_evidence_level_must_match_accepted_candidate(self):
+        with RepositoryFixture() as root:
+            candidate = root / "candidates/PC-2026-001-check-input.md"
+            accepted = VALID_CANDIDATE.replace("status: triaged", "status: accepted")
+            accepted = accepted.replace("decided:\n", "decided: 2026-07-05\n")
+            candidate.write_text(accepted, encoding="utf-8")
+            practice = root / "practices/common/PC-2026-001-check-input.md"
+            changed = VALID_PRACTICE.replace("evidence_level: E1", "evidence_level: E2")
+            practice.write_text(changed, encoding="utf-8")
+            messages = [p.message for p in validate.validate_repository(root, check_links=False)]
+            self.assertTrue(any("field 'evidence_level' differs" in message for message in messages))
+
     def test_invalid_calendar_date_is_rejected(self):
         with RepositoryFixture() as root:
             path = root / "candidates/PC-2026-001-check-input.md"
@@ -187,6 +236,64 @@ class CandidateValidationTests(unittest.TestCase):
             stale = validate.find_stale_practices(root, today=date(2026, 7, 5))
             self.assertEqual(1, len(stale))
             self.assertIn("review_by expired", stale[0].message)
+
+    def test_practice_dates_must_be_chronological(self):
+        with RepositoryFixture() as root:
+            candidate = root / "candidates/PC-2026-001-check-input.md"
+            accepted = VALID_CANDIDATE.replace("status: triaged", "status: accepted")
+            accepted = accepted.replace("decided:\n", "decided: 2026-07-05\n")
+            candidate.write_text(accepted, encoding="utf-8")
+            practice = root / "practices/common/PC-2026-001-check-input.md"
+            invalid = VALID_PRACTICE.replace("review_by: 2026-10-05", "review_by: 2026-07-05")
+            practice.write_text(invalid, encoding="utf-8")
+            messages = [p.message for p in validate.validate_repository(root, check_links=False)]
+            self.assertIn("review_by must be later than last_verified", messages)
+
+    def test_superseded_practice_requires_replacement(self):
+        with RepositoryFixture() as root:
+            candidate = root / "candidates/PC-2026-001-check-input.md"
+            accepted = VALID_CANDIDATE.replace("status: triaged", "status: accepted")
+            accepted = accepted.replace("decided:\n", "decided: 2026-07-05\n")
+            candidate.write_text(accepted, encoding="utf-8")
+            practice = root / "practices/common/PC-2026-001-check-input.md"
+            practice.write_text(VALID_PRACTICE.replace("status: trial", "status: superseded"), encoding="utf-8")
+            messages = [p.message for p in validate.validate_repository(root, check_links=False)]
+            self.assertIn("superseded practice requires superseded_by", messages)
+
+    def test_lifecycle_relation_must_reference_existing_practice(self):
+        with RepositoryFixture() as root:
+            candidate = root / "candidates/PC-2026-001-check-input.md"
+            accepted = VALID_CANDIDATE.replace("status: triaged", "status: accepted")
+            accepted = accepted.replace("decided:\n", "decided: 2026-07-05\n")
+            candidate.write_text(accepted, encoding="utf-8")
+            practice = root / "practices/common/PC-2026-001-check-input.md"
+            invalid = VALID_PRACTICE.replace("status: trial", "status: superseded")
+            invalid = invalid.replace("superseded_by:\n", "superseded_by: PC-2026-999\n")
+            practice.write_text(invalid, encoding="utf-8")
+            messages = [p.message for p in validate.validate_repository(root, check_links=False)]
+            self.assertIn("superseded_by references missing practice 'PC-2026-999'", messages)
+
+    def test_bidirectional_supersession_pair_passes(self):
+        with RepositoryFixture() as root:
+            old_candidate = VALID_CANDIDATE.replace("status: triaged", "status: accepted")
+            old_candidate = old_candidate.replace("decided:\n", "decided: 2026-07-05\n")
+            (root / "candidates/PC-2026-001-check-input.md").write_text(old_candidate, encoding="utf-8")
+            old_practice = VALID_PRACTICE.replace("status: trial", "status: superseded")
+            old_practice = old_practice.replace("superseded_by:\n", "superseded_by: PC-2026-002\n")
+            (root / "practices/common/PC-2026-001-check-input.md").write_text(old_practice, encoding="utf-8")
+
+            new_candidate = old_candidate.replace("PC-2026-001", "PC-2026-002")
+            (root / "candidates/PC-2026-002-check-input.md").write_text(new_candidate, encoding="utf-8")
+            new_practice = VALID_PRACTICE.replace("PC-2026-001", "PC-2026-002")
+            new_practice = new_practice.replace("supersedes:\n", "supersedes: PC-2026-001\n")
+            (root / "practices/common/PC-2026-002-check-input.md").write_text(new_practice, encoding="utf-8")
+            self.assertEqual([], validate.validate_repository(root, check_links=False))
+
+    def test_practice_transition_matrix(self):
+        self.assertTrue(validate.practice_transition_allowed("trial", "accepted"))
+        self.assertTrue(validate.practice_transition_allowed("accepted", "deprecated"))
+        self.assertFalse(validate.practice_transition_allowed("accepted", "trial"))
+        self.assertFalse(validate.practice_transition_allowed("superseded", "accepted"))
 
 
 if __name__ == "__main__":

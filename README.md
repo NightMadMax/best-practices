@@ -52,6 +52,9 @@
 Каждая практика — отдельный `PC-*.md` с контекстом, проблемой, решением,
 применимостью, evidence и происхождением. Контракт: [[docs/reference/PRACTICE_SCHEMA]].
 
+Поиск по section/status/tag/text выполняет `make catalog` или
+`scripts/search_practices.py`; справочник: [[docs/reference/PRACTICE_CATALOG]].
+
 ## Происхождение (provenance) — обязательно
 
 Каждая запись — практика, инструмент, MCP-сервер, анти-паттерн, промпт, сниппет

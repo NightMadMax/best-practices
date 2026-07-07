@@ -33,7 +33,8 @@ merge-конфликтов).
 1. Найти корень базы `Best Practices`: каталог с `README.md`, `INDEX.md`,
    `PROJECT.md`, `practices/` и `candidates/`.
 2. Полностью прочитать `candidates/README.md` (схема и статус-модель),
-   `candidates/_TEMPLATE.md`, ADR-0003 и текущие `practices/1c/README.md`,
+   `candidates/_TEMPLATE.md`,
+   `docs/architecture/decisions/ADR-0003-one-practice-per-file.md` и текущие `practices/1c/README.md`,
    `practices/web/README.md`, `practices/common/README.md`. Они имеют приоритет
    над этим workflow.
 
@@ -88,8 +89,8 @@ merge-конфликтов).
 ## Нормализовать кандидатов
 
 1. Для каждого прошедшего фильтр кандидата создать **отдельный файл**
-   `candidates/PC-<год>-<номер>-<slug>.md` по `candidates/_TEMPLATE.md`
-   (следующий свободный номер). Заполнить frontmatter: `id`, `status`, `source`,
+   файл через `scripts/new_candidate.py` с collision-resistant ID
+   `PC-<год>-<12hex>-<slug>.md`. Заполнить frontmatter: `id`, `status`, `source`,
    `added_by`, `stack`, `target`, `evidence_level`, `evidence`, `created`,
    `decided` — и тело.
    - **Происхождение обязательно** (ADR-0001): `source` — проект и артефакт;
@@ -97,7 +98,7 @@ merge-конфликтов).
      коммита; если найдено автоматически — указать `агент`/`harvest`).
    - Без заполненных `source` и `added_by` файл кандидата не создавать.
 2. `target` — будущий отдельный файл практики с тем же basename:
-   `practices/<раздел>/PC-<год>-<номер>-<slug>.md`. Не указывать README.
+   `practices/<раздел>/PC-<год>-<12hex>-<slug>.md`. Не указывать README.
 3. `evidence_level`: `E0`, если есть только мнение/внешний материал; `E1`, если
    сигнал подтверждён одним проектом. Harvest не выставляет `E2`/`E3` без
    явных независимых evidence.

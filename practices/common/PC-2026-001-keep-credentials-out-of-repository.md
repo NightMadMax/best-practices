@@ -14,6 +14,7 @@ created: 2026-07-05
 last_verified: 2026-07-05
 review_by: 2027-01-05
 supersedes:
+superseded_by:
 conflicts_with:
 candidate: candidates/PC-2026-001-keep-credentials-out-of-repository.md
 ---

@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import secrets
 from datetime import date
 from pathlib import Path
 from typing import Optional, Sequence
@@ -24,17 +25,16 @@ BODY_LABELS = {
 }
 
 
-def next_id(candidates_dir: Path, year: int) -> str:
-    numbers = []
-    pattern = re.compile(rf"^PC-{year}-(\d{{3}})-")
-    for path in candidates_dir.glob(f"PC-{year}-*.md"):
-        match = pattern.match(path.name)
-        if match:
-            numbers.append(int(match.group(1)))
-    number = max(numbers, default=0) + 1
-    if number > 999:
-        raise ValueError(f"candidate number range exhausted for {year}")
-    return f"PC-{year}-{number:03d}"
+def new_id(root: Path, year: int) -> str:
+    """Return a locally unique, collision-resistant candidate ID."""
+    for _ in range(100):
+        candidate_id = f"PC-{year}-{secrets.token_hex(6)}"
+        pattern = f"{candidate_id}-*.md"
+        candidate_exists = any((root / "candidates").glob(pattern))
+        practice_exists = any((root / "practices").glob(f"*/{pattern}"))
+        if not candidate_exists and not practice_exists:
+            return candidate_id
+    raise RuntimeError("could not allocate a unique candidate id")
 
 
 def render_candidate(
@@ -80,7 +80,7 @@ decided:
 
 def create_candidate(root: Path, args: argparse.Namespace) -> Path:
     candidates_dir = root / "candidates"
-    candidate_id = next_id(candidates_dir, args.year)
+    candidate_id = new_id(root, args.year)
     filename = f"{candidate_id}-{args.slug}.md"
     path = candidates_dir / filename
     if path.exists():
