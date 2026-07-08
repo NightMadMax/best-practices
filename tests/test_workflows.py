@@ -129,22 +129,15 @@ candidate: candidates/{filename}
                 practice_report.select_sections(project, {"1c"}),
             )
 
-    def test_cli_report_includes_all_seven_sections_end_to_end(self):
+    def test_cli_report_includes_all_sections_end_to_end(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / "base"
             project = Path(directory) / "consumer"
             root.mkdir()
             project.mkdir()
-            suffixes = {
-                "1c": "000000000001",
-                "web": "000000000002",
-                "common": "000000000003",
-                "tools": "000000000004",
-                "anti-patterns": "000000000005",
-                "prompts": "000000000006",
-                "snippets": "000000000007",
-            }
-            for stack, suffix in suffixes.items():
+            sections = sorted(validate.ALLOWED_STACKS)
+            for index, stack in enumerate(sections, start=1):
+                suffix = f"{index:012d}"
                 self._write_accepted_pair(root, stack, suffix, stack.replace("-", ""))
             command = [
                 sys.executable,
@@ -153,17 +146,15 @@ candidate: candidates/{filename}
                 str(root),
                 "--project",
                 str(project),
-                "--section",
-                "1c",
-                "--section",
-                "web",
                 "--format",
                 "json",
             ]
+            for stack in sorted(practice_report.STACK_SECTIONS):
+                command.extend(["--section", stack])
             result = subprocess.run(command, check=True, capture_output=True, text=True)
             report = json.loads(result.stdout)
             self.assertEqual(set(validate.ALLOWED_STACKS), set(report["sections"]))
-            self.assertEqual({"1c", "web"}, set(report["stacks"]))
+            self.assertEqual(set(practice_report.STACK_SECTIONS), set(report["stacks"]))
             self.assertEqual(report["stacks"], report["detected_stacks"])
             self.assertEqual(set(validate.ALLOWED_STACKS), {item["stack"] for item in report["practices"]})
 

@@ -16,16 +16,97 @@ import validate
 
 OUTCOMES = {"applied", "already-compliant", "not-applicable", "deferred"}
 PREFERENCE_VALUES = {"ask", "optout"}
-STACK_SECTIONS = {"1c", "web", "common"}
+STACK_SECTIONS = {
+    "1c",
+    "web",
+    "backend",
+    "mobile",
+    "desktop",
+    "data-ml",
+    "data-analysis",
+    "excel-research",
+    "powerbi",
+    "jira-confluence",
+    "devops",
+    "embedded",
+    "common",
+}
 CROSS_SECTIONS = {"tools", "anti-patterns", "prompts", "snippets"}
 
 
+def _has_glob(project: Path, *patterns: str) -> bool:
+    return any(any(project.rglob(pattern)) for pattern in patterns)
+
+
+def _deps_mention(project: Path, *needles: str) -> bool:
+    """Cheap scan of common dependency manifests for a keyword."""
+    manifests = (
+        "requirements.txt", "pyproject.toml", "environment.yml",
+        "package.json", "Pipfile",
+    )
+    lowered = tuple(n.lower() for n in needles)
+    for name in manifests:
+        path = project / name
+        if path.is_file():
+            try:
+                text = path.read_text(encoding="utf-8", errors="ignore").lower()
+            except OSError:
+                continue
+            if any(n in text for n in lowered):
+                return True
+    return False
+
+
 def detect_stacks(project: Path) -> Set[str]:
+    """Heuristic stack detection by marker files.
+
+    Deliberately explicit-only (no markers): ``data-analysis`` and
+    ``jira-confluence`` — their signals overlap other stacks or leave no local
+    files, so they are selected explicitly at project creation / harvest.
+    """
     stacks = {"common"}
-    if (project / "package.json").is_file():
+    # web (frontend)
+    if (project / "package.json").is_file() or (project / "index.html").is_file() \
+            or (project / "angular.json").is_file() \
+            or _has_glob(project, "*.jsx", "*.tsx", "vue.config.*", "svelte.config.*"):
         stacks.add("web")
-    if any(project.rglob("*.bsl")) or any(project.rglob("*.os")):
+    # 1c
+    if _has_glob(project, "*.bsl", "*.os"):
         stacks.add("1c")
+    # backend
+    if any((project / m).is_file() for m in (
+        "go.mod", "pom.xml", "build.gradle", "requirements.txt", "pyproject.toml",
+        "Gemfile", "composer.json", "Cargo.toml",
+    )) or _has_glob(project, "*.csproj"):
+        stacks.add("backend")
+    # mobile
+    if (project / "pubspec.yaml").is_file() or (project / "AndroidManifest.xml").is_file() \
+            or (project / "Podfile").is_file() or _has_glob(project, "*.xcodeproj") \
+            or _deps_mention(project, "react-native"):
+        stacks.add("mobile")
+    # desktop
+    if (project / "src-tauri").is_dir() or _deps_mention(project, "electron") \
+            or _has_glob(project, "*.sln", "*.pro"):
+        stacks.add("desktop")
+    # data-ml
+    if _has_glob(project, "*.ipynb") or (project / "environment.yml").is_file() \
+            or _deps_mention(project, "torch", "tensorflow", "keras", "scikit-learn", "sklearn"):
+        stacks.add("data-ml")
+    # excel-research
+    if _has_glob(project, "*.xlsx", "*.xlsm", "*.xls"):
+        stacks.add("excel-research")
+    # powerbi
+    if _has_glob(project, "*.pbix", "*.pbit"):
+        stacks.add("powerbi")
+    # devops
+    if any((project / m).is_file() for m in (
+        "Dockerfile", "docker-compose.yml", "docker-compose.yaml",
+        "kustomization.yaml", "Jenkinsfile",
+    )) or _has_glob(project, "*.tf"):
+        stacks.add("devops")
+    # embedded
+    if (project / "platformio.ini").is_file() or _has_glob(project, "*.ino"):
+        stacks.add("embedded")
     return stacks
 
 
