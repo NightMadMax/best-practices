@@ -89,6 +89,14 @@ class RepositoryContractTests(unittest.TestCase):
             with self.subTest(field=field):
                 self.assertIn(f"`{field}`", skill)
 
+    def test_harvest_and_apply_show_practices_before_mutation(self):
+        harvest = (ROOT / ".agents/skills/harvest-practice-candidates/SKILL.md").read_text(encoding="utf-8")
+        apply = (ROOT / ".agents/skills/apply-best-practices/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("harvest preview", harvest)
+        self.assertIn("До создания файлов показать пользователю", harvest)
+        self.assertIn("apply preview", apply)
+        self.assertIn("До изменения файлов показать пользователю", apply)
+
 
 if __name__ == "__main__":
     unittest.main()
