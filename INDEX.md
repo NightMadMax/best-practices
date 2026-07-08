@@ -28,6 +28,7 @@
 | [[docs/research/END_TO_END_PILOT_2026-07-05]] | End-to-end pilot конвейера практик |
 | [[docs/research/AGENTS_UPDATE_PROPOSAL_2026-07-05]] | Предложение Commands и Done when для следующей сессии |
 | [[docs/research/MODERNIZATION_PILOT_2026-07-06]] | Расширенный pilot трёх consumer snapshots и metrics |
+| [[docs/research/EXTERNAL_CONSUMER_PILOT_2026-07-08]] | Два внешних consumer pilot и aggregate adoption metrics |
 | [[docs/reviews/FULL_CODE_REVIEW_2026-07-06]] | Полный code review, harvest-анализ и оценка зрелости |
 | [[docs/reviews/P1_TRUST_HARDENING_REVIEW_2026-07-06]] | Review реализации P1 trust hardening |
 | [[docs/reviews/CROSS_SECTION_REPORT_REVIEW_2026-07-06]] | Review полноты cross-section consumer report |
