@@ -22,6 +22,15 @@ _Нет записей._
 
 ## Fixed
 
+### Сводный pilot report опубликован прямым push через admin bypass
+
+- **Обнаружено:** 2026-07-08, push commit `ce46c47`
+- **Исправлено:** 2026-07-08, текущий PR
+- **Root cause:** workflow consumer-проектов с прямым push на `main` был
+  ошибочно перенесён на BP, где ruleset требует PR и check `validate`.
+- **Исправление:** содержимое post-push проверено полным `make check`; нарушение
+  зафиксировано, дальнейшие BP changes публикуются только branch → PR → CI → merge.
+
 ### NPR writer использовал несовместимые поля consumer manifest
 
 - **Обнаружено:** 2026-07-07, свежий аудит NPR ↔ BP
