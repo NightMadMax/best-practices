@@ -33,3 +33,17 @@ reviewed fingerprinted migration `0004` обновила metadata до schema 2.
 
 Следующий этап должен расширять каталог доказанно применимых практик, а не
 усложнять инфраструктуру consumer manifest.
+
+## Revalidation после managed AGENTS migration
+
+После C1 оба consumer-проекта проверены повторно:
+
+- project validator: `0 errors / 0 warnings / 0 info`;
+- project-agents migration: `up_to_date`, managed schema 2;
+- manifests: 2 из 2, schema 2, global preference `ask`;
+- decisions: 6; outcomes остались `applied=1`, `already-compliant=3`,
+  `not-applicable=2`;
+- adoption rate не изменился: 66.7%.
+
+Новых accepted-практик и изменений consumer-файлов не было. Повторный report
+корректно сохранил ранее записанные решения и не предложил их как новые.
