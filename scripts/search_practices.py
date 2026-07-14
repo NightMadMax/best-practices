@@ -26,7 +26,7 @@ def load_catalog(root: Path) -> List[Dict[str, str]]:
             item.update(
                 {
                     "title": title,
-                    "path": str(path.relative_to(root)),
+                    "path": path.relative_to(root).as_posix(),
                     "search_text": f"{title}\n{body}".casefold(),
                 }
             )

@@ -22,6 +22,26 @@ _Нет записей._
 
 ## Fixed
 
+### JSON report падал в Windows-консоли с legacy encoding
+
+- **Обнаружено:** 2026-07-14, smoke-test исправления Windows validator
+- **Исправлено:** 2026-07-14, текущий commit
+- **Root cause:** CLI печатал Unicode JSON через системный `cp1251`; символы из
+  practice metadata вне этой кодировки приводили к `UnicodeEncodeError`.
+- **Исправление:** `practice_report.py` включает безопасное escaping символов,
+  которых нет в активной console encoding; JSON остаётся валидным, а вызывающий
+  процесс продолжает декодировать stdout в системной кодировке.
+
+### Windows validator отклонял canonical candidate targets
+
+- **Обнаружено:** 2026-07-14, создание consumer-проекта `favorit-web`
+- **Исправлено:** 2026-07-14, текущий commit
+- **Root cause:** pair-validation сравнивал POSIX-путь из поля `target` со
+  `str(Path.relative_to(...))`; на Windows второй путь содержал обратные слэши,
+  поэтому все accepted candidate → practice links считались повреждёнными.
+- **Исправление:** repository paths сериализуются через `.as_posix()`, regression
+  закрепляет canonical форму, а полный gate выполняется на Windows, Linux и macOS.
+
 ### Harvest и apply показывали состав практик только постфактум
 
 - **Обнаружено:** 2026-07-08, поправка пользователя

@@ -428,7 +428,7 @@ def validate_repository(root: Path, check_links: bool = True) -> List[Problem]:
                         problems.append(Problem(path, f"field {field!r} differs from accepted candidate"))
                 if candidate_fields.get("status") != "accepted":
                     problems.append(Problem(path, "linked candidate must have status 'accepted'"))
-                if candidate_fields.get("target") != str(path.relative_to(root)):
+                if candidate_fields.get("target") != path.relative_to(root).as_posix():
                     problems.append(Problem(path, "candidate target does not point to this practice"))
     for practice_id, path in practice_paths.items():
         fields, _, _ = parse_frontmatter(path)

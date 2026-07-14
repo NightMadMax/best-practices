@@ -183,6 +183,19 @@ class CandidateValidationTests(unittest.TestCase):
             practice.write_text(VALID_PRACTICE, encoding="utf-8")
             self.assertEqual([], validate.validate_repository(root, check_links=False))
 
+    def test_candidate_target_uses_canonical_posix_path(self):
+        with RepositoryFixture() as root:
+            candidate = root / "candidates/PC-2026-001-check-input.md"
+            accepted = VALID_CANDIDATE.replace("status: triaged", "status: accepted")
+            accepted = accepted.replace("decided:\n", "decided: 2026-07-05\n")
+            candidate.write_text(accepted, encoding="utf-8")
+            practice = root / "practices/common/PC-2026-001-check-input.md"
+            practice.write_text(VALID_PRACTICE, encoding="utf-8")
+
+            expected = practice.relative_to(root).as_posix()
+            self.assertEqual("practices/common/PC-2026-001-check-input.md", expected)
+            self.assertEqual([], validate.validate_repository(root, check_links=False))
+
     def test_accepted_practice_requires_e2(self):
         with RepositoryFixture() as root:
             candidate = root / "candidates/PC-2026-001-check-input.md"

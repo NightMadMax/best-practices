@@ -7,6 +7,7 @@ import argparse
 import json
 import re
 import subprocess
+import sys
 from datetime import date
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Set
@@ -130,7 +131,7 @@ def load_practices(root: Path, sections: Iterable[str], include_trial: bool = Fa
             )
             item = dict(fields)
             item["title"] = title
-            item["path"] = str(path.relative_to(root))
+            item["path"] = path.relative_to(root).as_posix()
             practices.append(item)
     return practices
 
@@ -351,6 +352,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="backslashreplace")
     args = build_parser().parse_args(argv)
     root = args.root.resolve()
     project = args.project.resolve()
