@@ -22,6 +22,16 @@ _Нет записей._
 
 ## Fixed
 
+### Cross-repository scheduled audit превышал scope `GITHUB_TOKEN`
+
+- **Обнаружено:** 2026-07-14, ручной `workflow_dispatch` governance-аудита NPR
+- **Исправлено:** 2026-07-14, текущий commit
+- **Root cause:** workflow token NPR пытался читать collaborators BP, хотя
+  `GITHUB_TOKEN` ограничен repository scope.
+- **Исправление:** каждый репозиторий запускает собственный scheduled self-audit;
+  BP использует immutable pin проверенного NPR audit script. Full cross-repo
+  audit выполняется интерактивно под пользовательской `gh`-авторизацией.
+
 ### Matrix CI переименовала обязательный ruleset check
 
 - **Обнаружено:** 2026-07-14, review cross-platform workflow
