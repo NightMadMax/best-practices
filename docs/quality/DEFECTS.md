@@ -22,6 +22,17 @@ _Нет записей._
 
 ## Fixed
 
+### Matrix CI переименовала обязательный ruleset check
+
+- **Обнаружено:** 2026-07-14, review cross-platform workflow
+- **Исправлено:** 2026-07-14, текущий commit
+- **Root cause:** job `validate` напрямую превратили в matrix, поэтому GitHub
+  публиковал только contexts `validate (<os>)`, а ruleset ожидал точный
+  обязательный context `validate`.
+- **Исправление:** matrix выполняется job `platform`, а агрегирующий job
+  `validate` сохраняет стабильный required-check context и падает при любой
+  неуспешной платформе.
+
 ### JSON report падал в Windows-консоли с legacy encoding
 
 - **Обнаружено:** 2026-07-14, smoke-test исправления Windows validator

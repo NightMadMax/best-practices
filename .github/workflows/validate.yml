@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate:
+  platform:
     strategy:
       fail-fast: false
       matrix:
@@ -38,3 +38,11 @@ jobs:
           python -m unittest discover -s tests -v
           python scripts/validate.py
           python scripts/validate.py --strict-freshness
+
+  validate:
+    if: always()
+    needs: platform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Preserve required validate check
+        run: test "${{ needs.platform.result }}" = "success"
