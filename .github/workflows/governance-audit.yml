@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           repository: NightMadMax/new-project-rules
-          ref: bca7e8ffed4dde289c7d70306ee71640ad8a6ab3
+          ref: 6542aef810aa7558871266c3bd9323878a73f2e6
           path: .external/new-project-rules
           persist-credentials: false
       - name: Verify ruleset and sole owner-admin invariant
