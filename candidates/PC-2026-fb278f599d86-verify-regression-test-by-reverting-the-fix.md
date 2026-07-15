@@ -1,6 +1,6 @@
 ---
 id: PC-2026-fb278f599d86
-status: new
+status: accepted
 source: "new-project-rules"
 added_by: "NightMadMax"
 stack: common
@@ -8,7 +8,7 @@ target: practices/common/PC-2026-fb278f599d86-verify-regression-test-by-revertin
 evidence_level: E1
 evidence: "Дефекты №69-71 в new-project-rules, commit a210e02: тест дефекта №69 проходил и на багованном коде, откат фикса это вскрыл"
 created: 2026-07-16
-decided:
+decided: 2026-07-16
 ---
 
 # Проверять regression-тест откатом фикса
@@ -30,6 +30,15 @@ decided:
   обеих версиях — их зелёный результат до фикса ожидаем.
 
 ## Notes
+
+**Решение 2026-07-16: accepted.** Практика создана как
+`practices/common/PC-2026-fb278f599d86-verify-regression-test-by-reverting-the-fix.md`
+со статусом `trial` — по правилу review уровень `E1` даёт `trial`, а не
+`accepted`: оба применения evidence происходят из одного проекта
+(`new-project-rules`). Перевод в `accepted` — после второго независимого проекта
+или воспроизводимой автоматической проверки самой практики. Дедуп по
+`practices/common` дублей не выявил. Commit: см. PR ветки
+`review/accept-verify-regression-test`.
 
 Применимо к любому стеку и языку, где есть система контроля версий и
 автоматические тесты; специфики инструмента нет — нужен только способ временно
