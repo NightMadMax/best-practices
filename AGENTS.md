@@ -106,7 +106,6 @@
 - Do not create empty documents without a current purpose.
 - Treat API specifications, lock files, generated SBOM files, and
   `.github/CODEOWNERS` as authoritative.
-- Never commit secrets or real credentials.
 
 ## Knowledge Promotion
 

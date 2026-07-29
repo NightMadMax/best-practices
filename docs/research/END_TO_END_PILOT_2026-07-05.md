@@ -6,8 +6,6 @@ last_verified: 2026-07-05
 source_of_truth: repository
 related:
   - "[[docs/how-to/HARVEST_REVIEW_APPLY]]"
-  - "[[candidates/PC-2026-001-keep-credentials-out-of-repository]]"
-  - "[[practices/common/PC-2026-001-keep-credentials-out-of-repository]]"
 ---
 
 # End-to-end pilot конвейера практик
@@ -28,13 +26,10 @@ project → candidate → review → accepted practice → consumer report → m
 
 ## Результат
 
-1. `scripts/new_candidate.py` создал
-   [[candidates/PC-2026-001-keep-credentials-out-of-repository]].
+1. `scripts/new_candidate.py` создал candidate `PC-2026-001`.
 2. После нормализации candidate прошёл `make check` в статусе `triaged`/`E2`.
-3. Review создал отдельную
-   [[practices/common/PC-2026-001-keep-credentials-out-of-repository]] в статусе
-   `accepted`; validator подтвердил совпадение ID, provenance, target и
-   evidence threshold.
+3. Review создал отдельную practice `PC-2026-001` в статусе `accepted`;
+   validator подтвердил совпадение ID, provenance, target и evidence threshold.
 4. Изменение зафиксировано commit `e64dc7a`.
 5. На изолированном consumer-проекте первый `practice_report.py` был read-only:
    manifest отсутствовал, outcome был `not-recorded`.
