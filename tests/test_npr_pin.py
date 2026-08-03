@@ -55,21 +55,26 @@ class NprPinTests(unittest.TestCase):
             self._repository(base / "repo", head)
             self.assertEqual([], check_npr_pin.check(base / "upstream", base / "repo"))
 
-    def test_pin_behind_main_is_reported(self):
+    def test_pin_behind_main_is_reported_without_failing(self):
+        # The two repositories pin each other. Failing on behind-main means they
+        # can never both be current: refreshing either pin advances that
+        # repository's main and puts the other one behind. So drift is a note,
+        # and the sibling repository had already decided this class the same way
+        # for its other upstream.
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)
             first, _ = self._upstream(base / "upstream")
             self._repository(base / "repo", first)
-            problems = check_npr_pin.check(base / "upstream", base / "repo")
+            self.assertEqual([], check_npr_pin.check(base / "upstream", base / "repo"))
+
+    def test_strict_pin_is_available_for_a_caller_that_wants_it(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            first, _ = self._upstream(base / "upstream")
+            self._repository(base / "repo", first)
+            problems = check_npr_pin.check(base / "upstream", base / "repo", strict=True)
             self.assertEqual(1, len(problems))
             self.assertIn("behind", problems[0])
-
-    def test_report_only_downgrades_a_stale_pin(self):
-        with tempfile.TemporaryDirectory() as directory:
-            base = Path(directory)
-            first, _ = self._upstream(base / "upstream")
-            self._repository(base / "repo", first)
-            self.assertEqual([], check_npr_pin.check(base / "upstream", base / "repo", strict=False))
 
     def test_missing_revision_is_reported(self):
         with tempfile.TemporaryDirectory() as directory:

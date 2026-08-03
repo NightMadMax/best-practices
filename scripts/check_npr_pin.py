@@ -15,10 +15,14 @@ Two questions, kept apart:
 
 * Does the pin still resolve, and does it still contain the script the workflow
   runs? A no here is a broken audit, today.
-* Is the pin behind the upstream default branch? A yes is a maintainer decision
-  to make deliberately — not something to follow automatically — but it must be
-  visible, and by default it is an error rather than a note, because the pin
-  going stale is exactly the failure this file exists for.
+* Is the pin behind the upstream default branch? That is a maintainer decision
+  to make deliberately, so it is reported and does not fail. Failing on it would
+  be worse than useless here: the two repositories pin *each other*, and
+  refreshing either pin advances that repository's main and puts the other one
+  behind — so a red build on behind-main means they can never both be current,
+  and the report stays red no matter what anyone does. The sibling repository
+  had already decided this class for its other upstream: a red build for drift
+  teaches people to ignore the check.
 """
 
 from __future__ import annotations
@@ -66,7 +70,7 @@ def _git(args: Sequence[str], cwd: Path) -> subprocess.CompletedProcess:
         raise PinError(f"git is not runnable: {exc}") from exc
 
 
-def check(upstream_root: Path, root: Path = ROOT, *, strict: bool = True) -> list[str]:
+def check(upstream_root: Path, root: Path = ROOT, *, strict: bool = False) -> list[str]:
     """Problems with the pin, read against a checkout of the upstream repository."""
     commit = pinned_commit(root)
     problems: list[str] = []
@@ -90,6 +94,8 @@ def check(upstream_root: Path, root: Path = ROOT, *, strict: bool = True) -> lis
         count = behind.stdout.strip() if behind.returncode == 0 else "?"
         message = (f"pin {commit[:12]} is {count} commit(s) behind {UPSTREAM} "
                    f"{upstream_head[:12]}; review and refresh it deliberately")
+        # `strict` exists for a caller that genuinely wants the pin enforced —
+        # nothing in this repository does, and the scheduled watcher must not.
         problems.append(message) if strict else print(f"NOTE: {message}")
 
     return problems
@@ -100,12 +106,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--upstream-root", type=Path, required=True,
                         help="checkout of new-project-rules to compare the pin against")
     parser.add_argument("--root", type=Path, default=ROOT)
-    parser.add_argument("--report-only", action="store_true",
-                        help="report a stale pin instead of failing on it")
+    parser.add_argument("--strict-pin", action="store_true",
+                        help="fail when the pin is behind main instead of reporting it")
     args = parser.parse_args(argv)
     try:
         problems = check(args.upstream_root.resolve(), args.root.resolve(),
-                         strict=not args.report_only)
+                         strict=args.strict_pin)
     except PinError as error:
         print(f"pin check failed: {error}", file=sys.stderr)
         return 1
