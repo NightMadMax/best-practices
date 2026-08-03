@@ -117,14 +117,26 @@ def select_sections(project: Path, explicit: Optional[Iterable[str]] = None) -> 
     return stacks | {"common"} | CROSS_SECTIONS
 
 
-def load_practices(root: Path, sections: Iterable[str], include_trial: bool = False) -> List[Dict[str, str]]:
+def load_practices(root: Path, sections: Iterable[str], include_trial: bool = False,
+                   today: Optional[date] = None) -> List[Dict[str, str]]:
+    """The practices a project should be told about.
+
+    `review_by` was written into every practice and read by nothing that
+    delivers: an expired practice went out as current advice, and the only check
+    that looked at the date ran when somebody happened to open a pull request.
+    A practice past its review date is still knowledge, so it is marked rather
+    than hidden — the consumer sees `stale: true` and can weigh it.
+    """
     allowed_statuses = {"accepted", "trial"} if include_trial else {"accepted"}
+    today = today or date.today()
     practices: List[Dict[str, str]] = []
     for stack in sorted(set(sections) | {"common"}):
         for path in sorted((root / "practices" / stack).glob("PC-*.md")):
             fields, body, problems = validate.parse_frontmatter(path)
             if problems or fields.get("status") not in allowed_statuses:
                 continue
+            review_by = fields.get("review_by", "")
+            stale = validate.is_iso_date(review_by) and date.fromisoformat(review_by) < today
             title = next(
                 (line[2:].strip() for line in body.splitlines() if line.startswith("# ")),
                 path.stem,
@@ -132,6 +144,7 @@ def load_practices(root: Path, sections: Iterable[str], include_trial: bool = Fa
             item = dict(fields)
             item["title"] = title
             item["path"] = path.relative_to(root).as_posix()
+            item["stale"] = "true" if stale else "false"
             practices.append(item)
     return practices
 
@@ -308,7 +321,9 @@ def markdown_report(
             [
                 f"## {practice['id']}: {practice['title']}",
                 "",
-                f"- Status: `{practice['status']}`; evidence: `{practice['evidence_level']}`.",
+                f"- Status: `{practice['status']}`; evidence: `{practice['evidence_level']}`."
+                + (f" **Просрочена: review_by {practice['review_by']}** — применять с проверкой."
+                   if practice.get("stale") == "true" else ""),
                 f"- Section: `{practice['stack']}`.",
                 f"- Applies to: {practice['applies_to']}",
                 f"- Source: `{practice['path']}`; {practice['source']}.",

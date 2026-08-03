@@ -14,15 +14,12 @@ from typing import Optional, Sequence
 import validate
 
 
-BODY_LABELS = {
-    "1c": ("Контекст", "Проблема", "Решение"),
-    "web": ("Контекст", "Проблема", "Решение"),
-    "common": ("Контекст", "Проблема", "Решение"),
-    "tools": ("Назначение", "Вердикт", "Настройка"),
-    "anti-patterns": ("Контекст", "Почему плохо", "Что делать вместо"),
-    "prompts": ("Когда применять", "Промпт / паттерн", "Почему работает"),
-    "snippets": ("Контекст", "Сниппет", "Заметки"),
-}
+# The generator writes the body the validator then demands, so it reads the
+# validator's table instead of keeping its own. A second copy stayed at seven
+# stacks after the list grew to seventeen, and the generator crashed with
+# KeyError on the ten it had never heard of — while the harvest skill named it
+# as the only way to create a candidate.
+BODY_LABELS = validate.BODY_FIELDS
 
 
 def new_id(root: Path, year: int) -> str:
@@ -47,6 +44,7 @@ def render_candidate(
     evidence: str,
     evidence_level: str,
     created: str,
+    status: str = "new",
 ) -> str:
     filename = f"{candidate_id}-{slug}.md"
     target = f"practices/{stack}/{filename}"
@@ -57,7 +55,7 @@ def render_candidate(
     quoted_evidence = json.dumps(evidence, ensure_ascii=False)
     return f'''---
 id: {candidate_id}
-status: new
+status: {status}
 source: {quoted_source}
 added_by: {quoted_added_by}
 stack: {stack}
@@ -95,6 +93,7 @@ def create_candidate(root: Path, args: argparse.Namespace) -> Path:
         evidence=args.evidence,
         evidence_level=args.evidence_level,
         created=args.created,
+        status=getattr(args, "status", "new"),
     )
     path.write_text(content, encoding="utf-8")
     return path
@@ -110,6 +109,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--added-by", required=True)
     parser.add_argument("--evidence", required=True)
     parser.add_argument("--evidence-level", choices=("E0", "E1"), default="E1")
+    # The harvest skill asks for `triaged` as soon as the section and target are
+    # settled, and the generator it names as the only way to create a candidate
+    # could only write `new` — so the very next step was always a hand edit of
+    # the file the generator had just produced.
+    parser.add_argument("--status", choices=("new", "triaged"), default="new")
     parser.add_argument("--year", type=int, default=date.today().year)
     parser.add_argument("--created", default=date.today().isoformat())
     return parser

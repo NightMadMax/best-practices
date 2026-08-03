@@ -25,6 +25,11 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # The job runs repository code with this token in the work tree, and
+          # the lifecycle check below needs the base commit, not just the tip.
+          persist-credentials: false
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
@@ -38,6 +43,17 @@ jobs:
           python -m unittest discover -s tests -v
           python scripts/validate.py
           python scripts/validate.py --strict-freshness
+
+      # ADR-0005 calls `superseded` terminal and requires a fresh review to
+      # reactivate a deprecated practice. Neither is visible in one revision, so
+      # the matrix went unenforced until this step: the base of the pull request
+      # supplies the previous status.
+      - name: Check practice lifecycle transitions against the base
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python scripts/validate.py --no-links --history-base "${{ github.event.pull_request.base.sha }}"
 
   validate:
     if: always()

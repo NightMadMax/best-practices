@@ -1,0 +1,30 @@
+name: freshness
+
+# `review_by` expires by the calendar, not by somebody opening a pull request.
+# The strict freshness check ran only on `pull_request` and `push`, so a
+# repository that is quiet for a quarter — the normal state of a knowledge base
+# between harvests — would let every practice pass its review date unnoticed
+# while still being delivered to projects as current.
+on:
+  schedule:
+    - cron: "31 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.9"
+      - name: Fail on practices past their review date
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python scripts/validate.py --strict-freshness
