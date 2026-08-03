@@ -22,7 +22,7 @@ jobs:
           # this audit reporting a bypass check it had never performed, so every
           # nightly run printed a reassurance about this repository that nothing
           # had verified. npr-pin-watch.yml now reports the pin going stale.
-          ref: a6c4538ee38fdbe4fd1007ae66efa98aa3479a0c
+          ref: 18f880c997d265790b0262e9fbda80227a6ae60a
           path: .external/new-project-rules
           persist-credentials: false
       - name: Verify ruleset and sole owner-admin invariant
