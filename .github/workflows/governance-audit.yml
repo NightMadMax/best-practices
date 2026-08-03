@@ -18,7 +18,11 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           repository: NightMadMax/new-project-rules
-          ref: 6542aef810aa7558871266c3bd9323878a73f2e6
+          # Refreshed 2026-08-03. The previous pin predated the fix that stopped
+          # this audit reporting a bypass check it had never performed, so every
+          # nightly run printed a reassurance about this repository that nothing
+          # had verified. npr-pin-watch.yml now reports the pin going stale.
+          ref: a6c4538ee38fdbe4fd1007ae66efa98aa3479a0c
           path: .external/new-project-rules
           persist-credentials: false
       - name: Verify ruleset and sole owner-admin invariant

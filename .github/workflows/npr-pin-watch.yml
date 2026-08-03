@@ -1,0 +1,47 @@
+name: npr-pin-watch
+
+# The governance audit here executes a script from new-project-rules, pinned by
+# commit. The pin is deliberate; going quietly stale is not. The other side of
+# this contract has watched its pin of this repository from the start, and this
+# is the missing half: without it the pin drifted 284 commits behind, and the
+# nightly audit kept running a version whose bypass check had already been fixed.
+#
+# Notification only: it never edits the pin. Refreshing it is a maintainer act.
+on:
+  schedule:
+    - cron: "23 5 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/governance-audit.yml"
+      - ".github/workflows/npr-pin-watch.yml"
+      - "scripts/check_npr_pin.py"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npr-pin-watch-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-pin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: NightMadMax/new-project-rules
+          ref: main
+          path: .external/new-project-rules
+          persist-credentials: false
+          # The pin is compared against main by commit distance, so the history
+          # has to be there: a shallow clone cannot answer "how far behind".
+          fetch-depth: 0
+      - name: Check the pinned revision still resolves and is current
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python3 scripts/check_npr_pin.py --upstream-root .external/new-project-rules

@@ -157,7 +157,13 @@ def relation_ids(value: str) -> List[str]:
 
 
 def parse_frontmatter(path: Path) -> Tuple[Dict[str, str], str, List[Problem]]:
-    text = path.read_text(encoding="utf-8")
+    return parse_frontmatter_text(path.read_text(encoding="utf-8"), path)
+
+
+def parse_frontmatter_text(text: str, path: Path) -> Tuple[Dict[str, str], str, List[Problem]]:
+    """Parse text that is not necessarily on disk: a blob from git history is
+    the same document, and the history check must read it with this parser
+    rather than a second, looser one."""
     lines = text.splitlines()
     problems: List[Problem] = []
     if not lines or lines[0].strip() != "---":
@@ -455,6 +461,70 @@ def validate_repository(root: Path, check_links: bool = True) -> List[Problem]:
     return problems
 
 
+class HistoryUnavailable(Exception):
+    """The requested base revision cannot be read, so nothing was compared."""
+
+
+def _blob_at(root: Path, base_ref: str, relative: str) -> Optional[str]:
+    """File content at `base_ref`, or None when it did not exist there."""
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), "show", f"{base_ref}:{relative}"],
+            capture_output=True, check=False)
+    except OSError as error:
+        raise HistoryUnavailable(f"git is not runnable: {error}") from error
+    if result.returncode != 0:
+        # A path missing at the base is a new practice, which has no previous
+        # status. A base that does not resolve at all is a broken check, and
+        # the two must not be confused — hence the probe below.
+        return None
+    return result.stdout.decode("utf-8", errors="replace")
+
+
+def validate_history(root: Path, base_ref: str) -> List[Problem]:
+    """Enforce the lifecycle matrix, which needs the previous status.
+
+    ADR-0005 calls `superseded` terminal and requires a fresh review to
+    reactivate a `deprecated` practice. Neither statement is checkable from a
+    single revision, so the matrix sat unused behind a unit test of its own
+    dictionary while `accepted` -> `trial` passed `make check` untouched.
+    """
+    try:
+        probe = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--verify", f"{base_ref}^{{commit}}"],
+            capture_output=True, check=False)
+    except OSError as error:
+        raise HistoryUnavailable(f"git is not runnable: {error}") from error
+    if probe.returncode != 0:
+        raise HistoryUnavailable(
+            f"base revision {base_ref!r} does not resolve: "
+            f"{probe.stderr.decode('utf-8', errors='replace').strip()}")
+
+    problems: List[Problem] = []
+    for stack in sorted(ALLOWED_STACKS):
+        for path in sorted((root / "practices" / stack).glob("PC-*.md")):
+            relative = path.relative_to(root).as_posix()
+            previous_text = _blob_at(root, base_ref, relative)
+            if previous_text is None:
+                continue
+            previous_fields, _, previous_problems = parse_frontmatter_text(previous_text, path)
+            if previous_problems:
+                continue
+            previous_status = previous_fields.get("status", "")
+            if previous_status not in ALLOWED_PRACTICE_TRANSITIONS:
+                continue
+            current_fields, _, current_problems = parse_frontmatter(path)
+            if current_problems:
+                continue
+            current_status = current_fields.get("status", "")
+            if not practice_transition_allowed(previous_status, current_status):
+                problems.append(Problem(
+                    path,
+                    f"status {previous_status!r} -> {current_status!r} is not an allowed "
+                    f"lifecycle transition (ADR-0005)"))
+    return problems
+
+
 def find_stale_practices(root: Path, today: Optional[date] = None) -> List[Problem]:
     today = today or date.today()
     stale: List[Problem] = []
@@ -477,6 +547,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="treat expired review_by dates as validation errors",
     )
+    parser.add_argument(
+        "--history-base",
+        default="",
+        help="revision to read previous practice statuses from, so the ADR-0005 "
+             "lifecycle matrix can be enforced (for example origin/main)",
+    )
     return parser
 
 
@@ -484,6 +560,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     args = build_parser().parse_args(argv)
     root = args.root.resolve()
     problems = validate_repository(root, check_links=not args.no_links)
+    if args.history_base:
+        # A history check that cannot read its base has verified nothing, and
+        # saying so is the point: silently passing is how the matrix went
+        # unenforced in the first place.
+        try:
+            problems.extend(validate_history(root, args.history_base))
+        except HistoryUnavailable as error:
+            print(f"lifecycle history was not checked: {error}", file=sys.stderr)
+            return 1
     stale = find_stale_practices(root)
     for warning in stale:
         print(f"WARNING: {warning.render(root)}", file=sys.stderr)

@@ -1,3 +1,4 @@
+import subprocess
 import tempfile
 import unittest
 from datetime import date
@@ -307,6 +308,73 @@ class CandidateValidationTests(unittest.TestCase):
         self.assertTrue(validate.practice_transition_allowed("accepted", "deprecated"))
         self.assertFalse(validate.practice_transition_allowed("accepted", "trial"))
         self.assertFalse(validate.practice_transition_allowed("superseded", "accepted"))
+
+
+class LifecycleHistoryTests(unittest.TestCase):
+    """The matrix above described a rule nothing enforced: `validate_repository`
+    reads one revision and cannot see a previous status. These tests exercise
+    the enforcer, not the dictionary."""
+
+    def _repository(self, root: Path, status: str) -> None:
+        (root / "candidates").mkdir()
+        (root / "practices/common").mkdir(parents=True)
+        (root / "practices/common/README.md").write_text("# Common\n", encoding="utf-8")
+        (root / "practices/common/PC-2026-001-check-input.md").write_text(
+            VALID_PRACTICE.replace("status: trial", f"status: {status}", 1), encoding="utf-8")
+        for command in (
+                ["git", "init", "-q"],
+                ["git", "config", "user.email", "test@example.com"],
+                ["git", "config", "user.name", "test"],
+                ["git", "add", "-A"],
+                ["git", "commit", "-q", "-m", "base"]):
+            subprocess.run(command, cwd=str(root), check=True, capture_output=True)
+
+    def _set_status(self, root: Path, status: str) -> None:
+        path = root / "practices/common/PC-2026-001-check-input.md"
+        text = path.read_text(encoding="utf-8")
+        current = text.split("status: ", 1)[1].split("\n", 1)[0]
+        path.write_text(text.replace(f"status: {current}", f"status: {status}", 1), encoding="utf-8")
+
+    def test_forbidden_transition_is_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._repository(root, "accepted")
+            self._set_status(root, "trial")
+            problems = validate.validate_history(root, "HEAD")
+            self.assertEqual(1, len(problems))
+            self.assertIn("not an allowed lifecycle transition", problems[0].message)
+
+    def test_superseded_is_terminal(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._repository(root, "superseded")
+            self._set_status(root, "accepted")
+            self.assertEqual(1, len(validate.validate_history(root, "HEAD")))
+
+    def test_allowed_transition_and_new_practice_pass(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._repository(root, "trial")
+            self._set_status(root, "accepted")
+            # A practice added after the base has no previous status and must
+            # not be mistaken for a forbidden transition out of nothing.
+            (root / "practices/common/PC-2026-002-check-input.md").write_text(
+                VALID_PRACTICE.replace("PC-2026-001", "PC-2026-002"), encoding="utf-8")
+            self.assertEqual([], validate.validate_history(root, "HEAD"))
+
+    def test_unreadable_base_is_an_error_not_a_pass(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._repository(root, "accepted")
+            with self.assertRaises(validate.HistoryUnavailable):
+                validate.validate_history(root, "no-such-ref")
+
+    def test_cli_fails_when_the_base_cannot_be_read(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._repository(root, "accepted")
+            self.assertEqual(1, validate.main(
+                ["--root", str(root), "--no-links", "--history-base", "no-such-ref"]))
 
 
 if __name__ == "__main__":

@@ -23,6 +23,33 @@ class RepositoryContractTests(unittest.TestCase):
         for action in uses:
             self.assertRegex(action, r"^[^@]+@[0-9a-f]{40}$")
 
+    def test_every_workflow_checkout_drops_the_token(self):
+        # The jobs run repository code, so a token left in .git/config is a
+        # credential sitting inside the thing being executed. governance-audit
+        # already dropped it and validate.yml did not; the rule is now asserted
+        # rather than applied per workflow from memory.
+        for path in sorted((ROOT / ".github/workflows").glob("*.yml")):
+            text = path.read_text(encoding="utf-8")
+            with self.subTest(path=path.name):
+                self.assertEqual(
+                    text.count("uses: actions/checkout@"),
+                    text.count("persist-credentials: false"))
+                self.assertNotIn("pull_request_target", text)
+
+    def test_validate_workflow_enforces_the_lifecycle_matrix(self):
+        # A check nobody runs is the defect this replaced: assert the workflow
+        # still calls it, and with a base to compare against.
+        text = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
+        self.assertIn("--history-base", text)
+        self.assertIn("fetch-depth: 0", text)
+
+    def test_dependabot_watches_the_pinned_actions(self):
+        # Every action is pinned by SHA, which means nothing updates them unless
+        # something proposes the update.
+        text = (ROOT / ".github/dependabot.yml").read_text(encoding="utf-8")
+        self.assertIn("package-ecosystem: github-actions", text)
+        self.assertIn("interval: weekly", text)
+
     def test_codeowners_protects_governance_and_content(self):
         codeowners = (ROOT / ".github/CODEOWNERS").read_text(encoding="utf-8")
         self.assertRegex(codeowners, r"(?m)^/\.github/\s+@\S+")

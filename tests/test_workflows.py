@@ -5,6 +5,7 @@ import sys
 import tempfile
 import unittest
 from argparse import Namespace
+from datetime import date
 from pathlib import Path
 
 
@@ -15,6 +16,8 @@ import practice_report  # noqa: E402
 import practice_metrics  # noqa: E402
 import search_practices  # noqa: E402
 import validate  # noqa: E402
+sys.path.insert(0, str(ROOT / "tests"))
+import test_validate  # noqa: E402
 
 
 class WorkflowTests(unittest.TestCase):
@@ -98,6 +101,70 @@ candidate: candidates/{filename}
                 fields["target"],
             )
             self.assertIn("<заполнить>", body)
+
+    def test_generator_accepts_every_stack_the_cli_offers(self):
+        # `--stack` offers all of ALLOWED_STACKS and the harvest skill names this
+        # generator as the only way to create a candidate. A private label table
+        # that had stopped at seven stacks turned the other ten into a KeyError,
+        # so the two tables are now one and this test walks the whole list.
+        for stack in sorted(validate.ALLOWED_STACKS):
+            with self.subTest(stack=stack), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                (root / "candidates").mkdir()
+                args = Namespace(
+                    year=2026,
+                    slug="every-stack",
+                    title="Проверка стека",
+                    stack=stack,
+                    source="test",
+                    added_by="test",
+                    evidence="test-case",
+                    evidence_level="E1",
+                    created="2026-07-05",
+                )
+                path = new_candidate.create_candidate(root, args)
+                fields, body, problems = validate.parse_frontmatter(path)
+                self.assertEqual([], problems)
+                self.assertEqual(stack, fields["stack"])
+                # The body has to carry the headings the validator demands for
+                # this stack, or the generated candidate fails its own review.
+                for label in validate.BODY_FIELDS[stack]:
+                    self.assertIn(label, body)
+
+    def test_delivery_marks_a_practice_past_its_review_date(self):
+        # `review_by` was written into every practice and read by nothing that
+        # delivers: an expired practice went out as current advice, and the only
+        # check that looked at the date ran when somebody opened a pull request.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "practices/common").mkdir(parents=True)
+            body = test_validate.VALID_PRACTICE.replace("status: trial", "status: accepted")
+            (root / "practices/common/PC-2026-001-check-input.md").write_text(
+                body, encoding="utf-8")
+            fresh = practice_report.load_practices(root, ["common"], today=date(2026, 8, 3))
+            self.assertEqual(["false"], [item["stale"] for item in fresh])
+            expired = practice_report.load_practices(root, ["common"], today=date(2027, 1, 1))
+            self.assertEqual(["true"], [item["stale"] for item in expired])
+            # And the reader has to see it, not just the data structure.
+            report = practice_report.markdown_report(
+                expired, practice_report.empty_manifest(), ["common"])
+            self.assertIn("Просрочена", report)
+
+    def test_generator_can_write_a_triaged_candidate(self):
+        # The harvest skill asks for `triaged` once the section and target are
+        # settled, and the generator could only write `new` — so its own
+        # documented next step was a hand edit of the file it had just made.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "candidates").mkdir()
+            args = Namespace(
+                year=2026, slug="triaged-at-birth", title="Сразу triaged",
+                stack="common", source="test", added_by="test", evidence="test-case",
+                evidence_level="E1", created="2026-07-05", status="triaged")
+            path = new_candidate.create_candidate(root, args)
+            fields, _, problems = validate.parse_frontmatter(path)
+            self.assertEqual([], problems)
+            self.assertEqual("triaged", fields["status"])
 
     @mock.patch("new_candidate.secrets.token_hex", side_effect=["a1b2c3d4e5f6", "deadbeefcafe"])
     def test_generator_retries_local_id_collision(self, _token_hex):
